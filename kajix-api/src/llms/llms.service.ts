@@ -65,7 +65,7 @@ export class LLMsService {
       return await this.prisma.lLMCompany.findMany({
         select: this.defaultCompanySelect,
       });
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException('Failed to fetch LLM companies');
     }
   }
@@ -179,7 +179,7 @@ export class LLMsService {
       return await this.prisma.lLMModel.findMany({
         select: this.defaultModelSelect,
       });
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException('Failed to fetch LLM models');
     }
   }

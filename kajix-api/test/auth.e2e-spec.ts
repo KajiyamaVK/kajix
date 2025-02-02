@@ -5,15 +5,20 @@ import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { TransactionHelper } from './helpers/transaction.helper';
 import { AuthHelper } from './helpers/auth.helper';
+import { User } from '@prisma/client';
+
+interface TestUser extends Pick<User, 'id' | 'email' | 'username'> {}
+
+interface TestSetup {
+  user: TestUser;
+  token: string;
+  password: string;
+}
 
 interface LoginResponse {
   access_token: string;
   session_token: string;
-  user: {
-    id: number;
-    email: string;
-    username: string;
-  };
+  user: TestUser;
 }
 
 interface SessionResponse {
@@ -28,11 +33,7 @@ describe('AuthController (e2e)', () => {
   let prisma: PrismaService;
   let txHelper: TransactionHelper;
   let authHelper: AuthHelper;
-  let testSetup: {
-    user: any;
-    token: string;
-    password: string;
-  };
+  let testSetup: TestSetup;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -63,23 +64,23 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('POST /auth/login', () => {
-    it('should authenticate user and create session', () => {
-      return request(app.getHttpServer())
+    it('should authenticate user and create session', async () => {
+      const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send({
           email: testSetup.user.email,
           password: testSetup.password,
         })
-        .expect(201)
-        .expect((res) => {
-          expect(res.body.access_token).toBeDefined();
-          expect(res.body.session_token).toBeDefined();
-          expect(res.body.user).toMatchObject({
-            id: testSetup.user.id,
-            email: testSetup.user.email,
-            username: testSetup.user.username,
-          });
-        });
+        .expect(201);
+
+      const loginResponse = response.body as LoginResponse;
+      expect(loginResponse.access_token).toBeDefined();
+      expect(loginResponse.session_token).toBeDefined();
+      expect(loginResponse.user).toMatchObject({
+        id: testSetup.user.id,
+        email: testSetup.user.email,
+        username: testSetup.user.username,
+      });
     });
 
     it('should fail with invalid email', () => {

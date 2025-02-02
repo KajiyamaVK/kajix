@@ -1,6 +1,23 @@
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { User } from '@prisma/client';
 import * as crypto from 'crypto';
+
+interface CreateUserOptions {
+  email: string;
+  username: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+interface TestUser extends Pick<User, 'id' | 'email' | 'username' | 'password' | 'salt'> {}
+
+interface TestSetup {
+  user: TestUser;
+  token: string;
+  password: string;
+}
 
 export class AuthHelper {
   private jwtService: JwtService;
