@@ -152,17 +152,10 @@ export class UsersService {
         where: { email },
       });
 
-      if (!user) {
-        throw new NotFoundException(`User with email ${email} not found`);
-      }
-
       return user;
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError) {
         throw new BadRequestException('Invalid email format');
-      }
-      if (err instanceof NotFoundException) {
-        throw err;
       }
       throw new InternalServerErrorException('Failed to fetch user');
     }
