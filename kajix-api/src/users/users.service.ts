@@ -50,7 +50,7 @@ export class UsersService {
       });
       return user;
     } catch (error) {
-      if (error.code === PrismaErrorCode.UNIQUE_CONSTRAINT_VIOLATION) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === PrismaErrorCode.UNIQUE_CONSTRAINT_VIOLATION) {
         throw new ConflictException('Email or username already exists');
       }
       throw error;

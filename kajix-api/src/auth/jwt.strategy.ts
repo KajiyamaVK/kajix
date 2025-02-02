@@ -14,25 +14,21 @@ interface UserFromJwt {
   username: string;
 }
 
-type JwtFromRequestFunction = () => string | null;
-
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
-    const extractJwt: JwtFromRequestFunction = ExtractJwt.fromAuthHeaderAsBearerToken();
     super({
-      jwtFromRequest: extractJwt,
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_SECRET || 'super-secret-for-dev',
-    });
+    } as const);
   }
 
-  async validate(payload: JwtPayload): Promise<UserFromJwt> {
-    const user = await Promise.resolve({
+  validate(payload: JwtPayload): UserFromJwt {
+    return {
       id: payload.sub,
       email: payload.email,
       username: payload.username,
-    });
-    return user;
+    };
   }
 }

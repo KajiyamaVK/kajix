@@ -11,7 +11,8 @@ interface CreateUserOptions {
   lastName?: string;
 }
 
-interface TestUser extends Pick<User, 'id' | 'email' | 'username' | 'password' | 'salt'> {}
+interface TestUser
+  extends Pick<User, 'id' | 'email' | 'username' | 'password' | 'salt'> {}
 
 interface TestSetup {
   user: TestUser;
