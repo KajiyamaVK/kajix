@@ -31,14 +31,14 @@ describe('LLMsController (e2e)', () => {
     prisma = app.get<PrismaService>(PrismaService);
     txHelper = new TransactionHelper(prisma);
     authHelper = new AuthHelper(prisma);
-    
+
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
   });
 
   beforeEach(async () => {
     await txHelper.resetDB();
-    
+
     // Create test user with unique credentials
     const timestamp = Date.now();
     const { user, token } = await authHelper.createTestUser({
@@ -87,9 +87,7 @@ describe('LLMsController (e2e)', () => {
     });
 
     it('should fail if not authenticated', () => {
-      return request(app.getHttpServer())
-        .get('/llms/companies')
-        .expect(401);
+      return request(app.getHttpServer()).get('/llms/companies').expect(401);
     });
   });
 
@@ -312,9 +310,7 @@ describe('LLMsController (e2e)', () => {
     });
 
     it('should fail if not authenticated', () => {
-      return request(app.getHttpServer())
-        .get('/llms/models')
-        .expect(401);
+      return request(app.getHttpServer()).get('/llms/models').expect(401);
     });
   });
 
@@ -560,4 +556,4 @@ describe('LLMsController (e2e)', () => {
         .expect(401);
     });
   });
-}); 
+});

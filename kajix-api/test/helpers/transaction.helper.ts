@@ -34,8 +34,12 @@ export class TransactionHelper {
     await this.prisma.$transaction(async (prisma) => {
       for (const table of tablesInProperOrder) {
         const dbTable = this.getTableName(table);
-        await prisma.$executeRawUnsafe(`ALTER SEQUENCE ${dbTable}_id_seq RESTART WITH 1`);
-        await prisma.$executeRawUnsafe(`SELECT setval('${dbTable}_id_seq', 1, false)`);
+        await prisma.$executeRawUnsafe(
+          `ALTER SEQUENCE ${dbTable}_id_seq RESTART WITH 1`,
+        );
+        await prisma.$executeRawUnsafe(
+          `SELECT setval('${dbTable}_id_seq', 1, false)`,
+        );
       }
     });
   }

@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ConflictException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  InternalServerErrorException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLLMDto } from './dto/create-llm.dto';
 import { UpdateLLMDto } from './dto/update-llm.dto';
@@ -128,13 +134,17 @@ export class LLMsService {
       });
 
       if (!llm) {
-        throw new NotFoundException(`LLM company with name ${companyName} not found`);
+        throw new NotFoundException(
+          `LLM company with name ${companyName} not found`,
+        );
       }
 
       return llm;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Failed to fetch LLM company by name');
+      throw new InternalServerErrorException(
+        'Failed to fetch LLM company by name',
+      );
     }
   }
 
@@ -240,4 +250,41 @@ export class LLMsService {
       throw new InternalServerErrorException('Failed to delete LLM model');
     }
   }
-} 
+
+  async findOne(id: number) {
+    try {
+      const llmModel = await this.prisma.lLMModel.findUnique({
+        where: { id },
+        include: {
+          llmCompany: true,
+        },
+      });
+
+      if (!llmModel) {
+        throw new NotFoundException(`LLM Model with ID ${id} not found`);
+      }
+
+      return llmModel;
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new InternalServerErrorException('Failed to fetch LLM Model');
+    }
+  }
+
+  async remove(id: number) {
+    try {
+      await this.findOne(id);
+
+      await this.prisma.lLMModel.delete({
+        where: { id },
+      });
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new InternalServerErrorException('Failed to delete LLM Model');
+    }
+  }
+}

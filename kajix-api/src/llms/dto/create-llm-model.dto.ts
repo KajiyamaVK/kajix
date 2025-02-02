@@ -12,4 +12,4 @@ export class CreateLLMModelDto {
   @IsInt()
   @IsNotEmpty()
   llmCompanyId: number;
-} 
+}

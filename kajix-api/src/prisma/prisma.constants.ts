@@ -7,4 +7,5 @@ export const PrismaErrorCode = {
 } as const;
 
 // Type-safe way to use the error codes
-export type PrismaErrorCodeType = typeof PrismaErrorCode[keyof typeof PrismaErrorCode]; 
+export type PrismaErrorCodeType =
+  (typeof PrismaErrorCode)[keyof typeof PrismaErrorCode];

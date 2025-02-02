@@ -6,6 +6,23 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import { TransactionHelper } from './helpers/transaction.helper';
 import { AuthHelper } from './helpers/auth.helper';
 
+interface LoginResponse {
+  access_token: string;
+  session_token: string;
+  user: {
+    id: number;
+    email: string;
+    username: string;
+  };
+}
+
+interface SessionResponse {
+  user: {
+    id: number;
+  };
+  isValid: boolean;
+}
+
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -26,14 +43,14 @@ describe('AuthController (e2e)', () => {
     prisma = app.get<PrismaService>(PrismaService);
     txHelper = new TransactionHelper(prisma);
     authHelper = new AuthHelper(prisma);
-    
+
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
   });
 
   beforeEach(async () => {
     await txHelper.resetDB();
-    
+
     testSetup = await authHelper.createTestUser({
       email: `auth-${Date.now()}@example.com`,
       username: `auth-${Date.now()}`,
@@ -155,4 +172,4 @@ describe('AuthController (e2e)', () => {
         .expect(401);
     });
   });
-}); 
+});

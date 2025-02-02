@@ -1,4 +1,10 @@
-import { Injectable, ConflictException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  InternalServerErrorException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -112,7 +118,9 @@ export class UsersService {
           case PrismaErrorCode.RECORD_NOT_FOUND:
             throw new NotFoundException(`User with ID ${id} not found`);
           case PrismaErrorCode.UNIQUE_CONSTRAINT_VIOLATION:
-            throw new ConflictException('Updated email or username already exists');
+            throw new ConflictException(
+              'Updated email or username already exists',
+            );
           default:
             throw new InternalServerErrorException('Database operation failed');
         }
@@ -123,14 +131,13 @@ export class UsersService {
 
   async remove(id: number) {
     try {
+      await this.findOne(id);
       return await this.prisma.user.delete({
         where: { id },
       });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === PrismaErrorCode.RECORD_NOT_FOUND) {
-          throw new NotFoundException(`User with ID ${id} not found`);
-        }
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
       }
       throw new InternalServerErrorException('Failed to delete user');
     }
@@ -142,9 +149,19 @@ export class UsersService {
         where: { email },
       });
 
+      if (!user) {
+        throw new NotFoundException(`User with email ${email} not found`);
+      }
+
       return user;
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to fetch user by email');
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException('Invalid email format');
+      }
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new InternalServerErrorException('Failed to fetch user');
     }
   }
 
@@ -170,7 +187,9 @@ export class UsersService {
       return user;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Failed to fetch user by username');
+      throw new InternalServerErrorException(
+        'Failed to fetch user by username',
+      );
     }
   }
-} 
+}

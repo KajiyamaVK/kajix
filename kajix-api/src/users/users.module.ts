@@ -7,4 +7,4 @@ import { UsersController } from './users.controller';
   providers: [UsersService],
   exports: [UsersService], // Export for future auth implementation
 })
-export class UsersModule {} 
+export class UsersModule {}

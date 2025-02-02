@@ -1,6 +1,6 @@
 import { PrismaService } from '../src/prisma/prisma.service';
 
-export default async function() {
+export default async function () {
   const prisma = new PrismaService();
 
   // Clean up the database before all tests
@@ -12,4 +12,4 @@ export default async function() {
   ]);
 
   await prisma.$disconnect();
-} 
+}

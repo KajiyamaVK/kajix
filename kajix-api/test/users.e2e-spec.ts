@@ -24,7 +24,7 @@ describe('UsersController (e2e)', () => {
     prisma = app.get<PrismaService>(PrismaService);
     txHelper = new TransactionHelper(prisma);
     authHelper = new AuthHelper(prisma);
-    
+
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
   });
@@ -153,10 +153,7 @@ describe('UsersController (e2e)', () => {
     });
 
     it('should return an empty array when no users exist', () => {
-      return request(app.getHttpServer())
-        .get('/users')
-        .expect(200)
-        .expect([]);
+      return request(app.getHttpServer()).get('/users').expect(200).expect([]);
     });
 
     it('should return all users without sensitive data', async () => {
@@ -283,4 +280,4 @@ describe('UsersController (e2e)', () => {
       expect(deletedUser).toBeNull();
     });
   });
-}); 
+});

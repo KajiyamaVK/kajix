@@ -83,4 +83,4 @@ export class LLMsController {
   removeModel(@Param('id', ParseIntPipe) id: number) {
     return this.llmsService.removeModel(id);
   }
-} 
+}

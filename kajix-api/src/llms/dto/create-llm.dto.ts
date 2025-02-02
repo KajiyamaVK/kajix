@@ -8,4 +8,4 @@ export class CreateLLMDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
-} 
+}

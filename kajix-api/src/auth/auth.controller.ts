@@ -28,4 +28,4 @@ export class AuthController {
   async validateSession(@Headers('session-token') sessionToken: string) {
     return this.authService.validateSession(sessionToken);
   }
-} 
+}
