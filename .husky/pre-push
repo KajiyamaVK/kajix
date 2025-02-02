@@ -1,0 +1,8 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Running backend verification..."
+cd kajix-api && npm run verify
+
+echo "Running frontend verification..."
+cd ../kajix-ui && npm run verify

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky install"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +15,8 @@
     "@nestjs/passport": "^11.0.5",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }
