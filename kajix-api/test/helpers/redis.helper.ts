@@ -13,19 +13,9 @@ export class RedisHelper {
         password: process.env.REDIS_PASSWORD || undefined,
         db: parseInt(process.env.REDIS_DB || '0'),
         lazyConnect: true,
+        connectTimeout: 5000,
+        disconnectTimeout: 2000,
       });
-
-      // Handle cleanup on process exit
-      process.on('exit', () => {
-        if (this.instance && !this.isShuttingDown) {
-          this.instance.disconnect();
-          this.instance = null;
-        }
-      });
-
-      // Handle cleanup on SIGTERM and SIGINT
-      process.on('SIGTERM', () => this.cleanup());
-      process.on('SIGINT', () => this.cleanup());
     }
     return this.instance;
   }
@@ -39,16 +29,25 @@ export class RedisHelper {
       this.isShuttingDown = true;
       
       try {
-        // Wait for any pending operations to complete
         if (this.cleanupPromises.length > 0) {
-          await Promise.all(this.cleanupPromises);
+          await Promise.race([
+            Promise.all(this.cleanupPromises),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Cleanup timeout')), 5000))
+          ]).catch(() => console.warn('Some cleanup promises timed out'));
           this.cleanupPromises = [];
         }
 
-        // Ensure all commands are processed before quitting
-        await this.instance.quit();
+        const quitPromise = this.instance.quit();
+        await Promise.race([
+          quitPromise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Redis quit timeout')), 2000))
+        ]).catch(() => {
+          console.warn('Redis quit timed out, forcing disconnect');
+          this.instance?.disconnect();
+        });
       } catch (error) {
         console.error('Error during Redis cleanup:', error);
+        this.instance?.disconnect();
       } finally {
         this.instance = null;
         this.isShuttingDown = false;

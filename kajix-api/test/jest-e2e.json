@@ -9,5 +9,8 @@
   "setupFiles": ["./setup-env.ts"],
   "globalSetup": "./jest.setup.ts",
   "globalTeardown": "./jest.teardown.ts",
-  "maxWorkers": 1
+  "maxWorkers": 1,
+  "testTimeout": 10000,
+  "forceExit": true,
+  "detectOpenHandles": true
 } 

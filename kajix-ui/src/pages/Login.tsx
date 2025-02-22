@@ -1,11 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
 import { LoginForm } from '@/components/auth/LoginForm';
 
 export const Login = () => {
   const { t } = useTranslation();
-  const location = useLocation();
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

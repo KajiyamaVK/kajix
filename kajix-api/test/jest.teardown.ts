@@ -1,9 +1,15 @@
 import { RedisHelper } from './helpers/redis.helper';
 
 export default async function () {
-  // Clean up Redis connections
-  await RedisHelper.cleanup();
-  
-  // Add a delay to ensure Redis connections are fully closed
-  await new Promise(resolve => setTimeout(resolve, 500));
+  try {
+    // Clean up Redis connections with a timeout
+    await Promise.race([
+      RedisHelper.cleanup(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Global teardown timeout')), 5000))
+    ]).catch((error) => {
+      console.warn('Teardown warning:', error.message);
+    });
+  } catch (error) {
+    console.error('Error during global teardown:', error);
+  }
 } 
