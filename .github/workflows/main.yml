@@ -10,8 +10,8 @@ env:
   NODE_VERSION: "20.x"
 
 jobs:
-  test:
-    name: Test
+  test-api:
+    name: Test API
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -36,12 +36,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
+          cache-dependency-path: kajix-api/package-lock.json
 
-      - name: Install Dependencies
-        run: |
-          npm ci
-          cd kajix-api && npm ci
-          cd ../kajix-ui && npm ci
+      - name: Install API Dependencies
+        working-directory: ./kajix-api
+        run: npm ci
 
       - name: Run API Tests
         working-directory: ./kajix-api
@@ -50,15 +49,37 @@ jobs:
           npm run test
           npm run test:e2e
 
+  test-ui:
+    name: Test UI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: kajix-ui/package-lock.json
+
+      - name: Install UI Dependencies
+        working-directory: ./kajix-ui
+        run: npm ci
+
       - name: Run UI Linting
         working-directory: ./kajix-ui
         run: npm run lint
 
-  deploy:
-    name: Deploy
-    needs: test
+      - name: Build UI
+        working-directory: ./kajix-ui
+        run: npm run build
+
+  deploy-api:
+    name: Deploy API
+    needs: [test-api]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    environment: Production
 
     steps:
       - uses: actions/checkout@v4
@@ -68,6 +89,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
+          cache-dependency-path: kajix-api/package-lock.json
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
@@ -82,6 +104,26 @@ jobs:
           vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
           vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
           vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  deploy-ui:
+    name: Deploy UI
+    needs: [test-ui]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: Production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: kajix-ui/package-lock.json
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
 
       - name: Deploy UI to Vercel
         working-directory: ./kajix-ui
