@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: "20.x"
+  NODE_ENV: "test"
 
 jobs:
   test-api:
@@ -17,9 +18,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: kajix_test
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DATABASE: ${{ secrets.POSTGRES_DATABASE }}
         ports:
           - 5433:5432
         options: >-
@@ -44,10 +45,13 @@ jobs:
 
       - name: Run API Tests
         working-directory: ./kajix-api
+        env:
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          NODE_ENV: ${{ env.NODE_ENV }}
         run: |
           npm run test:db:migrate
           npm run test
-          npm run test:e2e
+          npm run test:e2e -- --forceExit
 
   test-ui:
     name: Test UI
