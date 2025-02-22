@@ -46,24 +46,6 @@ model User {
   salt      String   // Salt used for password hashing
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  sessions  AppSession[]
 
   @@map("users")
-}
-
-model AppSession {
-  id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int      @map("user_id")
-  token       String   @unique
-  loginDate   DateTime @default(now()) @map("login_date")
-  expiresAt   DateTime @map("expires_at")
-  lastActive  DateTime @default(now()) @map("last_active")
-  userAgent   String?  @map("user_agent")
-  ipAddress   String?  @map("ip_address")
-  isValid     Boolean  @default(true) @map("is_valid")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
-
-  @@map("app_sessions")
 }

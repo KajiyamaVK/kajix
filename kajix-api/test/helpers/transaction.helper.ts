@@ -16,9 +16,7 @@ export class TransactionHelper {
     // List the tables in the correct order to avoid foreign key constraints
     await this.prisma.$transaction(async (prisma) => {
       for (const table of tablesInProperOrder) {
-        if (table === 'appSession') {
-          await prisma.appSession.deleteMany();
-        } else if (table === 'llmModel') {
+        if (table === 'llmModel') {
           await prisma.lLMModel.deleteMany();
         } else if (table === 'llmCompany') {
           await prisma.lLMCompany.deleteMany();
@@ -57,8 +55,6 @@ export class TransactionHelper {
         return 'llm_companies';
       case 'user':
         return 'users';
-      case 'appSession':
-        return 'app_sessions';
       default:
         return table;
     }
@@ -67,7 +63,7 @@ export class TransactionHelper {
   setupHelper() {
     return {
       // Order matters: delete dependent tables first
-      tablesInProperOrder: ['appSession', 'llmModel', 'llmCompany', 'user'],
+      tablesInProperOrder: ['llmModel', 'llmCompany', 'user'],
     };
   }
 }

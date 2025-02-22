@@ -6,9 +6,9 @@ services:
     ports:
       - '5432:5432'
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: kajix
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -20,14 +20,35 @@ services:
     ports:
       - '5433:5432' # Different port for test database
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: kajix_test
+    networks:
+      - kajix_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: kajix_redis
+    ports:
+      - '6379:6379'
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    networks:
+      - kajix_network
+
+  redis_test:
+    image: redis:7-alpine
+    container_name: kajix_redis_test
+    ports:
+      - '6380:6379' # Different port for test Redis
+    command: redis-server --save 60 1 --loglevel warning
     networks:
       - kajix_network
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   kajix_network:

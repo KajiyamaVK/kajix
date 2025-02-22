@@ -1,0 +1,33 @@
+{
+  "common": {
+    "welcome": "Bem-vindo ao Kajix",
+    "language": "Idioma",
+    "loading": "Carregando..."
+  },
+  "navigation": {
+    "home": "Início",
+    "settings": "Configurações"
+  },
+  "auth": {
+    "login": "Entre na sua conta",
+    "loginDescription": "Por favor, insira suas credenciais para acessar sua conta",
+    "unauthorized": "Por favor, faça login para acessar esta página",
+    "register": "Criar uma conta",
+    "registerDescription": "Cadastre-se para uma nova conta",
+    "email": "E-mail",
+    "password": "Senha",
+    "name": "Nome",
+    "confirmPassword": "Confirmar Senha",
+    "signIn": "Entrar",
+    "signUp": "Cadastrar",
+    "alreadyHaveAccount": "Já tem uma conta?",
+    "dontHaveAccount": "Não tem uma conta?",
+    "chooseAuthMethod": "Escolha entre entrar ou criar uma nova conta",
+    "loginForm": "Formulário de login",
+    "registerForm": "Formulário de cadastro",
+    "emailDescription": "Digite seu endereço de e-mail usado para autenticação",
+    "passwordDescription": "Digite sua senha com pelo menos 8 caracteres",
+    "nameDescription": "Digite seu nome completo",
+    "confirmPasswordDescription": "Digite novamente sua senha para confirmar"
+  }
+} 

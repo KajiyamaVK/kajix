@@ -5,7 +5,6 @@ export default async function () {
 
   // Clean up the database before all tests
   await prisma.$transaction([
-    prisma.appSession.deleteMany(),
     prisma.lLMModel.deleteMany(),
     prisma.lLMCompany.deleteMany(),
     prisma.user.deleteMany(),

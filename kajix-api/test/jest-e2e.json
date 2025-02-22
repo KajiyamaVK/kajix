@@ -8,5 +8,6 @@
   },
   "setupFiles": ["./setup-env.ts"],
   "globalSetup": "./jest.setup.ts",
+  "globalTeardown": "./jest.teardown.ts",
   "maxWorkers": 1
 } 

@@ -2,6 +2,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { User } from '@prisma/client';
 import * as crypto from 'crypto';
+import { Redis } from 'ioredis';
 
 interface CreateUserOptions {
   email: string;
@@ -22,10 +23,18 @@ interface TestSetup {
 
 export class AuthHelper {
   private jwtService: JwtService;
+  private redis: Redis;
 
   constructor(private prisma: PrismaService) {
     this.jwtService = new JwtService({
-      secret: process.env.JWT_SECRET || 'super-secret-for-dev',
+      secret: process.env.JWT_SECRET || 'test-jwt-secret-key',
+    });
+
+    this.redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6380'),
+      password: process.env.REDIS_PASSWORD || undefined,
+      db: parseInt(process.env.REDIS_DB || '0'),
     });
   }
 
@@ -61,11 +70,22 @@ export class AuthHelper {
       },
     });
 
+    const jti = crypto.randomBytes(16).toString('hex');
     const token = this.jwtService.sign({
       sub: user.id,
       email: user.email,
       username: user.username,
+      jti,
+      type: 'access',
     });
+
+    // Store token in Redis
+    await this.redis.set(
+      `access_token:${user.id}:${token}`,
+      'valid',
+      'EX',
+      24 * 60 * 60, // 1 day in seconds
+    );
 
     return {
       user,

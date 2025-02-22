@@ -3,6 +3,11 @@ node_modules/
 .pnp/
 .pnp.js
 
+# Cursor files
+.cursor/
+.cursor/**
+.cursorrules
+
 # Testing
 coverage/
 .nyc_output/
