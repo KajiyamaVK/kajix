@@ -14,24 +14,24 @@ datasource db {
 }
 
 model LLMCompany {
-  id          Int      @id @default(autoincrement())
-  isActive    Boolean  @default(true)
-  companyName String   @unique @map("company_name")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  id          Int        @id @default(autoincrement())
+  isActive    Boolean    @default(true)
+  companyName String     @unique @map("company_name")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
   models      LLMModel[]
 
   @@map("llm_companies")
 }
 
 model LLMModel {
-  id            Int      @id @default(autoincrement())
-  displayName   String   @map("display_name")
-  modelName     String   @map("model_name")
-  llmCompany    LLMCompany     @relation(fields: [llmCompanyId], references: [id])
-  llmCompanyId  Int     @map("llm_company_id")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  id           Int        @id @default(autoincrement())
+  displayName  String     @map("display_name")
+  modelName    String     @map("model_name")
+  llmCompany   LLMCompany @relation(fields: [llmCompanyId], references: [id])
+  llmCompanyId Int        @map("llm_company_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
 
   @@map("llm_models")
 }
@@ -42,10 +42,24 @@ model User {
   username  String   @unique
   firstName String   @map("first_name")
   lastName  String   @map("last_name")
-  password  String   // This will store the hashed password
-  salt      String   // Salt used for password hashing
+  password  String // This will store the hashed password
+  salt      String // Salt used for password hashing
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+model TmpToken {
+  id        Int       @id @default(autoincrement())
+  type      Int
+  emailFrom String
+  emailTo   String
+  token     String?
+  isExpired Boolean   @default(false) @map("is_expired")
+  expiredAt DateTime? @map("expired_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@map("tmp_tokens")
 }
