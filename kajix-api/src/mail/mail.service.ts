@@ -52,7 +52,7 @@ export class MailService {
   ): Promise<void> {
     try {
       const mailOptions: nodemailer.SendMailOptions = {
-        from: process.env.EMAIL_USER || 'contato@argilesestudio.com.br',
+        from: process.env.EMAIL_USER,
         to,
         subject,
         text,
