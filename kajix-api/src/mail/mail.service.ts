@@ -12,10 +12,10 @@ export class MailService {
     this.logger.log(`EMAIL_PORT: ${process.env.EMAIL_PORT}`);
     this.logger.log(`EMAIL_USER: ${process.env.EMAIL_USER}`);
     
-    const host = process.env.EMAIL_HOST || 'smtp.hostinger.com';
-    const port = parseInt(process.env.EMAIL_PORT || '465', 10);
-    const user = process.env.EMAIL_USER || 'contato@argilesestudio.com.br';
-    const password = process.env.EMAIL_PASSWORD || 'CqQ64^xh$ihgK%';
+    const host = process.env.EMAIL_HOST;
+    const port = parseInt(process.env.EMAIL_PORT!);
+    const user = process.env.EMAIL_USER;
+    const password = process.env.EMAIL_PASSWORD;
 
     this.logger.log(`Configuring mail service with host: ${host}, port: ${port}`);
 
