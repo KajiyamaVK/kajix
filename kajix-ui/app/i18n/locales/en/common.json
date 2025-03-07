@@ -1,0 +1,23 @@
+{
+  "welcome": "Welcome to Kajix",
+  "accountAccess": "Account Access",
+  "signInToAccount": "Sign in to your account or create a new one",
+  "login": "Login",
+  "register": "Register",
+  "email": "Email",
+  "password": "Password",
+  "forgotPassword": "Forgot password?",
+  "loggingIn": "Logging in...",
+  "registering": "Registering...",
+  "orContinueWith": "or continue with",
+  "googleLogin": "Login with Google",
+  "invalidEmail": "Invalid email address",
+  "passwordMinLength": "Password must be at least 6 characters",
+  "confirmationEmailSent": "Confirmation email sent! Please check your inbox to complete registration.",
+  "confirmationEmailInfo": "A confirmation email will be sent to this address. Follow the link in the email to complete your registration.",
+  "poweredBy": "Powered by",
+  "changeLanguage": "Change language",
+  "lightMode": "Light mode",
+  "darkMode": "Dark mode"
+}
+

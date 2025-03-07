@@ -9,6 +9,11 @@ on:
 env:
   NODE_VERSION: "20.x"
   NODE_ENV: "test"
+  EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+  EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+  EMAIL_USER: ${{ secrets.EMAIL_USER }}
+  EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+  EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
 
 jobs:
   test-api:
@@ -48,6 +53,11 @@ jobs:
         env:
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           NODE_ENV: ${{ env.NODE_ENV }}
+          EMAIL_HOST: ${{ env.EMAIL_HOST }}
+          EMAIL_PORT: ${{ env.EMAIL_PORT }}
+          EMAIL_USER: ${{ env.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ env.EMAIL_PASSWORD }}
+          EMAIL_FROM: ${{ env.EMAIL_FROM }}
         run: |
           npm run test:db:migrate
           npm run test
