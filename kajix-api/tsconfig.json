@@ -16,6 +16,14 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "noFallthroughCasesInSwitch": false,
+    "composite": true,
+    "paths": {
+      "@types/*": ["../packages/types/src/*"],
+      "@types": ["../packages/types/src"]
+    }
+  },
+  "references": [
+    { "path": "../packages/types" }
+  ]
 }

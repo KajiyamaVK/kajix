@@ -1,7 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { createManyUsers } from './factories/user.factory';
-import { createRealLLMCompanies, createManyLLMCompanies } from './factories/llm.factory';
-import { createRealLLMModels, createManyLLMModels } from './factories/llm-model.factory';
+import {
+  createRealLLMCompanies,
+  createManyLLMCompanies,
+} from './factories/llm.factory';
+import {
+  createRealLLMModels,
+  createManyLLMModels,
+} from './factories/llm-model.factory';
 
 const prisma = new PrismaClient();
 
@@ -38,4 +44,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-  }); 
+  });

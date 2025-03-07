@@ -7,7 +7,9 @@ export class MailController {
   constructor(private readonly mailService: MailService) {}
 
   @Post('send')
-  async sendEmail(@Body() sendEmailDto: SendEmailDto): Promise<{ success: boolean; message: string }> {
+  async sendEmail(
+    @Body() sendEmailDto: SendEmailDto,
+  ): Promise<{ success: boolean; message: string }> {
     try {
       await this.mailService.sendEmail(
         sendEmailDto.to,
@@ -15,7 +17,7 @@ export class MailController {
         sendEmailDto.text,
         sendEmailDto.html,
       );
-      
+
       return {
         success: true,
         message: 'Email sent successfully',
@@ -44,4 +46,4 @@ export class MailController {
       return { status: 'Mail service is not operational' };
     }
   }
-} 
+}

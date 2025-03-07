@@ -11,13 +11,15 @@ export class MailService {
     this.logger.log(`EMAIL_HOST: ${process.env.EMAIL_HOST}`);
     this.logger.log(`EMAIL_PORT: ${process.env.EMAIL_PORT}`);
     this.logger.log(`EMAIL_USER: ${process.env.EMAIL_USER}`);
-    
+
     const host = process.env.EMAIL_HOST;
     const port = parseInt(process.env.EMAIL_PORT!);
     const user = process.env.EMAIL_USER;
     const password = process.env.EMAIL_PASSWORD;
 
-    this.logger.log(`Configuring mail service with host: ${host}, port: ${port}`);
+    this.logger.log(
+      `Configuring mail service with host: ${host}, port: ${port}`,
+    );
 
     this.transporter = nodemailer.createTransport({
       host,
@@ -30,7 +32,7 @@ export class MailService {
     });
 
     // Verify connection configuration
-    this.verifyConnection();
+    void this.verifyConnection();
   }
 
   private async verifyConnection(): Promise<boolean> {

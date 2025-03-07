@@ -27,12 +27,14 @@ export class RedisHelper {
   static async cleanup() {
     if (this.instance && !this.isShuttingDown) {
       this.isShuttingDown = true;
-      
+
       try {
         if (this.cleanupPromises.length > 0) {
           await Promise.race([
             Promise.all(this.cleanupPromises),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Cleanup timeout')), 5000))
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Cleanup timeout')), 5000),
+            ),
           ]).catch(() => console.warn('Some cleanup promises timed out'));
           this.cleanupPromises = [];
         }
@@ -40,7 +42,9 @@ export class RedisHelper {
         const quitPromise = this.instance.quit();
         await Promise.race([
           quitPromise,
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Redis quit timeout')), 2000))
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Redis quit timeout')), 2000),
+          ),
         ]).catch(() => {
           console.warn('Redis quit timed out, forcing disconnect');
           this.instance?.disconnect();

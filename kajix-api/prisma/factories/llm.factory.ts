@@ -21,7 +21,10 @@ export async function createLLMCompany(data: LLMFactoryData = {}) {
   });
 }
 
-export async function createManyLLMCompanies(count: number, data: LLMFactoryData = {}) {
+export async function createManyLLMCompanies(
+  count: number,
+  data: LLMFactoryData = {},
+) {
   return Promise.all(
     Array.from({ length: count }, () => createLLMCompany(data)),
   );
@@ -51,4 +54,4 @@ export async function createRealLLMCompanies() {
       }),
     ),
   );
-} 
+}

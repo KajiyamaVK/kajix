@@ -1,19 +1,26 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useTheme } from "next-themes"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { LoginForm } from "./login-form"
-import { RegisterForm } from "./register-form"
-import { ThemeToggle } from "../theme/theme-toggle"
-import { LanguageToggle } from "../i18n/language-toggle"
-import { useTranslation } from "@/app/i18n/client"
+// import { useState, useEffect } from "react";
+// import { useTheme } from "next-themes";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { LoginForm } from "./login-form";
+import { RegisterForm } from "./register-form";
+import { ThemeToggle } from "../theme/theme-toggle";
+import { LanguageToggle } from "../i18n/language-toggle";
+import { useTranslation } from "@/app/i18n/client";
 
 export default function LoginPage() {
-  const { t } = useTranslation()
-  const [mounted, setMounted] = useState(false)
-  const { theme } = useTheme()
+  const { t } = useTranslation();
+  // const [mounted, setMounted] = useState(false);
+  // const { theme } = useTheme();
 
   // TODO: Remove this part if no hydration errors appears. Commenting on March 7, 2025.
   // Prevent hydration mismatch
@@ -58,7 +65,10 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-center text-sm text-muted-foreground">
               <span>{t("poweredBy")} </span>
-              <a href="https://kajix.com" className="underline underline-offset-4 hover:text-primary">
+              <a
+                href="https://kajix.com"
+                className="underline underline-offset-4 hover:text-primary"
+              >
                 Kajix
               </a>
             </div>
@@ -66,6 +76,5 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
-

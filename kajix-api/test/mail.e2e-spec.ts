@@ -6,7 +6,7 @@ import { MailService } from '../src/mail/mail.service';
 describe('Mail Service (e2e)', () => {
   let app: INestApplication;
   let mailService: MailService;
-  
+
   // Mock implementation for testing
   const mockMailService = {
     sendEmail: jest.fn().mockImplementation((to, subject, text, html) => {
@@ -45,31 +45,32 @@ describe('Mail Service (e2e)', () => {
     const to = 'victor.kajiyama@gmail.com';
     const subject = 'Test Email from E2E Test';
     const text = 'This is a test email sent from the E2E test.';
-    const html = '<p>This is a <strong>test email</strong> sent from the E2E test.</p>';
-    
+    const html =
+      '<p>This is a <strong>test email</strong> sent from the E2E test.</p>';
+
     await mailService.sendEmail(to, subject, text, html);
-    
+
     expect(mockMailService.sendEmail).toHaveBeenCalledWith(
       to,
       subject,
       text,
-      html
+      html,
     );
   });
-  
+
   it('should handle real email sending in a separate test (disabled by default)', async () => {
     // This test is skipped by default to avoid sending real emails in automated tests
     // Remove the .skip to run it manually when needed
-    
+
     // Creating a custom provider for this test only to use the real service
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [MailModule],
     }).compile();
-    
+
     const realMailService = moduleFixture.get<MailService>(MailService);
-    
+
     // Uncomment to send a real email during testing
-    
+
     await expect(
       realMailService.sendEmail(
         'victor.kajiyama@gmail.com',
@@ -78,9 +79,8 @@ describe('Mail Service (e2e)', () => {
         '<p>This is a <strong>real test email</strong> sent from the E2E test.</p>',
       ),
     ).resolves.not.toThrow();
-    
-    
+
     // Clean up
     await moduleFixture.close();
   }, 10000);
-}); 
+});

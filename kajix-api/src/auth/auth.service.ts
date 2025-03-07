@@ -4,6 +4,17 @@ import { UsersService } from '../users/users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Redis } from 'ioredis';
 import * as crypto from 'crypto';
+import { RedisService } from '../redis/redis.service';
+import { User } from '@prisma/client';
+
+// Define token payload interface
+interface TokenPayload {
+  sub: number;
+  email: string;
+  username: string;
+  jti?: string;
+  type?: 'access' | 'refresh';
+}
 
 @Injectable()
 export class AuthService {
@@ -14,18 +25,7 @@ export class AuthService {
     private jwtService: JwtService,
     private prisma: PrismaService,
   ) {
-    // In test environment, try to get Redis instance from helper
-    if (process.env.NODE_ENV === 'test') {
-      const { RedisHelper } = require('../../test/helpers/redis.helper');
-      this.redis = RedisHelper.getInstance();
-    } else {
-      this.redis = new Redis({
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        password: process.env.REDIS_PASSWORD || undefined,
-        db: parseInt(process.env.REDIS_DB || '0'),
-      });
-    }
+    this.redis = RedisService.getInstance();
   }
 
   private hashPassword(password: string, salt: string): string {
@@ -34,7 +34,7 @@ export class AuthService {
       .toString('hex');
   }
 
-  async validateUser(email: string, password: string) {
+  async validateUser(email: string, password: string): Promise<User> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -48,7 +48,10 @@ export class AuthService {
     return user;
   }
 
-  private generateTokens(payload: any) {
+  private generateTokens(payload: TokenPayload): {
+    accessToken: string;
+    refreshToken: string;
+  } {
     // Add random jti (JWT ID) to make each token unique
     const jti = crypto.randomBytes(16).toString('hex');
     const basePayload = { ...payload, jti };
@@ -66,7 +69,11 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private async storeTokens(userId: number, accessToken: string, refreshToken: string) {
+  private async storeTokens(
+    userId: number,
+    accessToken: string,
+    refreshToken: string,
+  ) {
     const multi = this.redis.multi();
 
     // Store access token with 1 day expiry
@@ -114,11 +121,11 @@ export class AuthService {
 
   async logout(userId: number, accessToken: string, refreshToken: string) {
     const multi = this.redis.multi();
-    
+
     // Delete both tokens
     multi.del(`access_token:${userId}:${accessToken}`);
     multi.del(`refresh_token:${userId}:${refreshToken}`);
-    
+
     // Execute both commands and wait for them to complete
     await multi.exec();
 
@@ -135,24 +142,26 @@ export class AuthService {
     try {
       // Verify and decode the refresh token
       const decoded = this.jwtService.verify(oldRefreshToken);
-      
+
       // Ensure it's a refresh token
       if (decoded.type !== 'refresh') {
         throw new UnauthorizedException('Invalid token type');
       }
 
-      const userId = decoded.sub;
+      const userId = Number(decoded.sub);
 
       // Check if refresh token exists and is valid in Redis
-      const isValid = await this.redis.exists(`refresh_token:${userId}:${oldRefreshToken}`);
+      const isValid = await this.redis.exists(
+        `refresh_token:${userId}:${oldRefreshToken}`,
+      );
       if (!isValid) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
       // Get user data
-      const user = await this.prisma.user.findUnique({
+      const user = (await this.prisma.user.findUnique({
         where: { id: userId },
-      });
+      })) as User;
 
       if (!user) {
         throw new UnauthorizedException('User not found');
@@ -171,7 +180,9 @@ export class AuthService {
       await this.redis.del(`refresh_token:${userId}:${oldRefreshToken}`);
 
       // Verify old token is deleted before storing new ones
-      const oldTokenExists = await this.redis.exists(`refresh_token:${userId}:${oldRefreshToken}`);
+      const oldTokenExists = await this.redis.exists(
+        `refresh_token:${userId}:${oldRefreshToken}`,
+      );
       if (oldTokenExists) {
         throw new UnauthorizedException('Error invalidating old token');
       }
@@ -190,8 +201,8 @@ export class AuthService {
           lastName: user.lastName,
         },
       };
-    } catch (error) {
-      if (error.name === 'TokenExpiredError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
         throw new UnauthorizedException('Refresh token has expired');
       }
       throw new UnauthorizedException('Invalid refresh token');

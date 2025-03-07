@@ -41,19 +41,32 @@ export async function createLLMModel(data: LLMModelFactoryData = {}) {
   });
 }
 
-export async function createManyLLMModels(count: number, data: LLMModelFactoryData = {}) {
-  return Promise.all(
-    Array.from({ length: count }, () => createLLMModel(data)),
-  );
+export async function createManyLLMModels(
+  count: number,
+  data: LLMModelFactoryData = {},
+) {
+  return Promise.all(Array.from({ length: count }, () => createLLMModel(data)));
 }
 
 // Example LLM models for popular companies
 const popularModels = [
-  { companyName: 'OpenAI', models: ['GPT-4', 'GPT-3.5-Turbo', 'GPT-3.5-Turbo-16k'] },
-  { companyName: 'Anthropic', models: ['Claude 3 Opus', 'Claude 3 Sonnet', 'Claude 3 Haiku'] },
+  {
+    companyName: 'OpenAI',
+    models: ['GPT-4', 'GPT-3.5-Turbo', 'GPT-3.5-Turbo-16k'],
+  },
+  {
+    companyName: 'Anthropic',
+    models: ['Claude 3 Opus', 'Claude 3 Sonnet', 'Claude 3 Haiku'],
+  },
   { companyName: 'Google DeepMind', models: ['Gemini Pro', 'Gemini Ultra'] },
-  { companyName: 'Cohere', models: ['Command', 'Command-Light', 'Command-Nightly'] },
-  { companyName: 'Mistral AI', models: ['Mistral Large', 'Mistral Medium', 'Mistral Small'] },
+  {
+    companyName: 'Cohere',
+    models: ['Command', 'Command-Light', 'Command-Nightly'],
+  },
+  {
+    companyName: 'Mistral AI',
+    models: ['Mistral Large', 'Mistral Medium', 'Mistral Small'],
+  },
 ];
 
 export async function createRealLLMModels() {
@@ -77,4 +90,4 @@ export async function createRealLLMModels() {
   }
 
   return Promise.all(createdModels);
-} 
+}

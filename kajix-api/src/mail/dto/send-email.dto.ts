@@ -16,4 +16,4 @@ export class SendEmailDto {
   @IsString()
   @IsOptional()
   html?: string;
-} 
+}

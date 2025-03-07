@@ -16,9 +16,9 @@ describe('RedisHelper', () => {
       // Get an instance and verify it exists
       const redis = RedisHelper.getInstance();
       expect(redis).toBeDefined();
-      
+
       // Add a test cleanup promise
-      const testPromise = new Promise(resolve => setTimeout(resolve, 100));
+      const testPromise = new Promise((resolve) => setTimeout(resolve, 100));
       RedisHelper.addCleanupPromise(testPromise);
 
       // Test connection by setting a value
@@ -45,7 +45,7 @@ describe('RedisHelper', () => {
     it('should handle cleanup when no instance exists', async () => {
       // @ts-ignore - accessing private property for testing
       expect(RedisHelper['instance']).toBeNull();
-      
+
       // Should not throw error when cleaning up without instance
       await expect(RedisHelper.cleanup()).resolves.not.toThrow();
     });
@@ -65,7 +65,7 @@ describe('RedisHelper', () => {
 
     it('should process cleanup promises before closing connection', async () => {
       const redis = RedisHelper.getInstance();
-      
+
       // Add a cleanup promise that sets a value
       const cleanupPromise = redis.set('cleanup-test', 'cleanup-value');
       RedisHelper.addCleanupPromise(cleanupPromise);
@@ -75,9 +75,9 @@ describe('RedisHelper', () => {
 
       // Verify the cleanup promise was processed
       await cleanupProcess;
-      
+
       // @ts-ignore - accessing private property for testing
       expect(RedisHelper['instance']).toBeNull();
     });
   });
-}); 
+});

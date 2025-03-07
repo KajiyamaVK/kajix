@@ -23,7 +23,8 @@ function hashPassword(password: string, salt: string): string {
 export async function createUser(data: UserFactoryData = {}) {
   const firstName = data.firstName ?? faker.person.firstName();
   const lastName = data.lastName ?? faker.person.lastName();
-  const username = data.username ?? faker.internet.username({ firstName, lastName });
+  const username =
+    data.username ?? faker.internet.username({ firstName, lastName });
   const email = data.email ?? faker.internet.email({ firstName, lastName });
   const password = data.password ?? faker.internet.password({ length: 12 });
 
@@ -53,8 +54,9 @@ export async function createUser(data: UserFactoryData = {}) {
   });
 }
 
-export async function createManyUsers(count: number, data: UserFactoryData = {}) {
-  return Promise.all(
-    Array.from({ length: count }, () => createUser(data)),
-  );
-} 
+export async function createManyUsers(
+  count: number,
+  data: UserFactoryData = {},
+) {
+  return Promise.all(Array.from({ length: count }, () => createUser(data)));
+}

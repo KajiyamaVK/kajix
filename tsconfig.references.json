@@ -1,0 +1,8 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/types" },
+    { "path": "./kajix-api" },
+    { "path": "./kajix-ui" }
+  ]
+} 

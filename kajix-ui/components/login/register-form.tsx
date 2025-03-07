@@ -1,46 +1,53 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Loader2 } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useTranslation } from "@/app/i18n/client"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "@/app/i18n/client";
 
 export function RegisterForm() {
-  const { t } = useTranslation()
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const { t } = useTranslation();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const registerSchema = z.object({
     email: z.string().email(t("invalidEmail")),
-  })
+  });
 
-  type RegisterFormValues = z.infer<typeof registerSchema>
+  type RegisterFormValues = z.infer<typeof registerSchema>;
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: "",
     },
-  })
+  });
 
   async function onSubmit(data: RegisterFormValues) {
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       // Here you would typically call your registration API
-      console.log("Registration data:", data)
-      await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate API call
-      setIsSubmitted(true)
+      console.log("Registration data:", data);
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      setIsSubmitted(true);
     } catch (error) {
-      console.error("Registration error:", error)
+      console.error("Registration error:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -49,13 +56,18 @@ export function RegisterForm() {
       <Alert className="bg-primary/10 border-primary/20">
         <AlertDescription>{t("confirmationEmailSent")}</AlertDescription>
       </Alert>
-    )
+    );
   }
 
   return (
     <div className="space-y-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void form.handleSubmit(onSubmit)(e);
+          }}
+          className="space-y-4"
+        >
           <FormField
             control={form.control}
             name="email"
@@ -93,6 +105,5 @@ export function RegisterForm() {
         </form>
       </Form>
     </div>
-  )
+  );
 }
-

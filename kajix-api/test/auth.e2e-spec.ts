@@ -150,7 +150,7 @@ describe('AuthController (e2e)', () => {
         .expect(200);
 
       // Wait a bit for Redis operations to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Verify tokens are removed from Redis
       const accessTokenExists = await redis.exists(
@@ -208,7 +208,7 @@ describe('AuthController (e2e)', () => {
       });
 
       // Wait a bit for Redis operations to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Verify old refresh token is invalidated
       const oldRefreshTokenExists = await redis.exists(
@@ -242,7 +242,7 @@ describe('AuthController (e2e)', () => {
         .expect(200);
 
       // Wait a bit for Redis operations to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Second refresh with same token - should fail
       await request(app.getHttpServer())
@@ -260,7 +260,7 @@ describe('AuthController (e2e)', () => {
         .expect(200);
 
       // Wait a bit for Redis operations to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Then try to refresh - should fail
       await request(app.getHttpServer())

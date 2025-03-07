@@ -1,6 +1,6 @@
-export const fallbackLng = "en"
-export const languages = ["en", "pt-BR"]
-export const defaultNS = "common"
+export const fallbackLng = "en";
+export const languages = ["en", "pt-BR"];
+export const defaultNS = "common";
 
 export function getOptions(lng = fallbackLng, ns = defaultNS) {
   return {
@@ -10,6 +10,5 @@ export function getOptions(lng = fallbackLng, ns = defaultNS) {
     fallbackNS: defaultNS,
     defaultNS,
     ns,
-  }
+  };
 }
-

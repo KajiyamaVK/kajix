@@ -7,13 +7,11 @@ import { CreateUserDto } from '../src/users/dto/create-user.dto';
 import { UpdateUserDto } from '../src/users/dto/update-user.dto';
 import * as crypto from 'crypto';
 import { TransactionHelper } from './helpers/transaction.helper';
-import { AuthHelper } from './helpers/auth.helper';
 
 describe('UsersController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let txHelper: TransactionHelper;
-  let authHelper: AuthHelper;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -23,7 +21,6 @@ describe('UsersController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     prisma = app.get<PrismaService>(PrismaService);
     txHelper = new TransactionHelper(prisma);
-    authHelper = new AuthHelper(prisma);
 
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
@@ -58,8 +55,18 @@ describe('UsersController (e2e)', () => {
         .send(createUserDto)
         .expect(201);
 
+      // Type assertion to fix "Unsafe assignment of an any value" error
+      type UserResponse = typeof createUserDto & {
+        id: number;
+        createdAt: string;
+        updatedAt: string;
+        password?: string;
+        salt?: string;
+      };
+      const userData = response.body as UserResponse;
+
       // Check response format
-      expect(response.body).toMatchObject({
+      expect(userData).toMatchObject({
         id: expect.any(Number),
         username: createUserDto.username,
         email: createUserDto.email,
@@ -70,12 +77,12 @@ describe('UsersController (e2e)', () => {
       });
 
       // Verify password is not returned
-      expect(response.body.password).toBeUndefined();
-      expect(response.body.salt).toBeUndefined();
+      expect(userData.password).toBeUndefined();
+      expect(userData.salt).toBeUndefined();
 
       // Verify password is properly hashed in database
       const user = await prisma.user.findUnique({
-        where: { id: response.body.id },
+        where: { id: userData.id },
       });
 
       expect(user).not.toBeNull();
