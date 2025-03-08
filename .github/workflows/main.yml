@@ -15,6 +15,7 @@ env:
   EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
   EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
   DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5433/${{ secrets.POSTGRES_DATABASE }}?schema=public
+  HUSKY: "0"
 
 jobs:
   test-api:
@@ -49,21 +50,15 @@ jobs:
             packages/types/package-lock.json
 
       - name: Install Root Dependencies
-        run: |
-          npm ci
-          npm run prepare --if-present
+        run: npm ci
 
       - name: Install API Dependencies
         working-directory: ./kajix-api
-        run: |
-          npm ci
-          npm run prepare --if-present
+        run: npm ci
 
       - name: Install Types Dependencies
         working-directory: ./packages/types
-        run: |
-          npm ci
-          npm run prepare --if-present
+        run: npm ci
 
       - name: Type Check API
         run: |
@@ -82,7 +77,6 @@ jobs:
           EMAIL_USER: ${{ env.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ env.EMAIL_PASSWORD }}
           EMAIL_FROM: ${{ env.EMAIL_FROM }}
-          HUSKY: "0"
         run: |
           npm run test:db:migrate
           npm run test:api
