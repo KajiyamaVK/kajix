@@ -42,7 +42,7 @@ describe('Mail Service (e2e)', () => {
   });
 
   it('should send an email successfully', async () => {
-    const to = 'victor.kajiyama@gmail.com';
+    const to = 'test@example.com';
     const subject = 'Test Email from E2E Test';
     const text = 'This is a test email sent from the E2E test.';
     const html =
