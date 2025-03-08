@@ -9,14 +9,17 @@ on:
 env:
   NODE_VERSION: "20.x"
   NODE_ENV: "test"
-  EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
-  EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
-  EMAIL_USER: ${{ secrets.EMAIL_USER }}
-  EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-  EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+  EMAIL_HOST: "localhost"
+  EMAIL_PORT: "587"
+  EMAIL_USER: "test"
+  EMAIL_PASSWORD: "test"
+  EMAIL_FROM: "test@example.com"
   DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5433/${{ secrets.POSTGRES_DATABASE }}?schema=public
   HUSKY: "0"
   CI: "true"
+  MOCK_EMAIL: "true"
+  MOCK_SCRAPING: "true"
+  JEST_TIMEOUT: "10000"
 
 jobs:
   test-api:
@@ -84,9 +87,12 @@ jobs:
           EMAIL_USER: ${{ env.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ env.EMAIL_PASSWORD }}
           EMAIL_FROM: ${{ env.EMAIL_FROM }}
+          MOCK_EMAIL: ${{ env.MOCK_EMAIL }}
+          MOCK_SCRAPING: ${{ env.MOCK_SCRAPING }}
+          JEST_TIMEOUT: ${{ env.JEST_TIMEOUT }}
         run: |
           npm run test
-          npm run test:e2e -- --forceExit
+          npm run test:e2e -- --forceExit --testTimeout=10000
 
   test-ui:
     name: Test UI
