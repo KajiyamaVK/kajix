@@ -67,11 +67,12 @@ jobs:
           DATABASE_URL: ${{ env.DATABASE_URL }}
         run: npx prisma generate
 
+      - name: Build Types
+        run: npm run build:types
+
       - name: Type Check API
-        run: |
-          cd ..
-          npm run build:types
-          cd kajix-api && npm run type-check:api
+        working-directory: ./kajix-api
+        run: npm run type-check:api
 
       - name: Run API Tests
         working-directory: ./kajix-api
