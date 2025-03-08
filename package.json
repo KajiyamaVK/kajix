@@ -22,8 +22,8 @@
   "description": "",
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
-    "@nestjs/jwt": "^11.0.0",
-    "@nestjs/passport": "^11.0.5",
+    "@nestjs/jwt": "^10.2.0",
+    "@nestjs/passport": "^10.0.3",
     "@radix-ui/react-slot": "^1.1.2",
     "@reduxjs/toolkit": "^2.5.1",
     "@types/react": "^19.0.8",

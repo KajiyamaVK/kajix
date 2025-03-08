@@ -6,6 +6,7 @@ import {
   HttpCode,
   UseGuards,
   Request,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -22,8 +23,8 @@ class RefreshTokenDto {
 
 interface UserRequest extends ExpressRequest {
   user: {
-    userId: number;
-    accessToken: string;
+    id: number;
+    email: string;
   };
   body: {
     refresh_token: string;
@@ -35,22 +36,52 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @HttpCode(201)
   async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto.email, loginDto.password);
+    const user = await this.authService.validateUser(
+      loginDto.email,
+      loginDto.password,
+    );
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    return this.authService.login(user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(200)
   async logout(@Request() req: UserRequest) {
-    const { userId, accessToken } = req.user;
+    const { id } = req.user;
+    const authHeader = req.headers.authorization;
+    const accessToken = authHeader?.split(' ')[1];
     const refreshToken = req.body.refresh_token;
-    return this.authService.logout(userId, accessToken, refreshToken);
+
+    if (!accessToken || !refreshToken) {
+      throw new UnauthorizedException('Missing tokens');
+    }
+
+    return this.authService.logout(id, accessToken, refreshToken);
   }
 
   @Post('refresh')
   @HttpCode(200)
   async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshToken(refreshTokenDto.refresh_token);
+    try {
+      // Extract user ID from the refresh token
+      const decodedToken = this.authService['jwtService'].decode(
+        refreshTokenDto.refresh_token,
+      );
+      if (!decodedToken?.sub) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      return this.authService.refreshToken(
+        decodedToken.sub,
+        refreshTokenDto.refresh_token,
+      );
+    } catch (error) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 }

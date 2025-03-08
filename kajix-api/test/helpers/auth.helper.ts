@@ -1,8 +1,8 @@
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../src/prisma/prisma.service';
 // import { User } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { Redis } from 'ioredis';
 
 // interface CreateUserOptions {
 //   email: string;
@@ -23,34 +23,24 @@ import { Redis } from 'ioredis';
 
 export class AuthHelper {
   private jwtService: JwtService;
-  private redis: Redis;
 
   constructor(private prisma: PrismaService) {
     this.jwtService = new JwtService({
       secret: process.env.JWT_SECRET || 'test-jwt-secret-key',
     });
-
-    this.redis = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6380'),
-      password: process.env.REDIS_PASSWORD || undefined,
-      db: parseInt(process.env.REDIS_DB || '0'),
-    });
   }
 
-  private generateSalt(): string {
-    return crypto.randomBytes(16).toString('hex');
-  }
-
-  private hashPassword(password: string, salt: string): string {
-    return crypto
-      .pbkdf2Sync(password, salt, 1000, 64, 'sha512')
-      .toString('hex');
+  private async hashPassword(
+    password: string,
+  ): Promise<{ hash: string; salt: string }> {
+    const salt = await bcrypt.genSalt();
+    const hash = await bcrypt.hash(password, salt);
+    return { hash, salt };
   }
 
   async createTestUser(override: any = {}) {
-    const salt = this.generateSalt();
     const password = override.password || 'password123';
+    const { hash, salt } = await this.hashPassword(password);
 
     // Clean up existing users and reset sequence
     await this.prisma.$transaction([
@@ -65,7 +55,7 @@ export class AuthHelper {
         email: override.email || 'test@example.com',
         firstName: override.firstName || 'Test',
         lastName: override.lastName || 'User',
-        password: this.hashPassword(password, salt),
+        password: hash,
         salt,
       },
     });
@@ -78,14 +68,6 @@ export class AuthHelper {
       jti,
       type: 'access',
     });
-
-    // Store token in Redis
-    await this.redis.set(
-      `access_token:${user.id}:${token}`,
-      'valid',
-      'EX',
-      24 * 60 * 60, // 1 day in seconds
-    );
 
     return {
       user,

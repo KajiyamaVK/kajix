@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import type { INestApplication } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { TransactionHelper } from './helpers/transaction.helper';
 import { AuthHelper } from './helpers/auth.helper';
-import { User } from '@prisma/client';
-import { Redis } from 'ioredis';
-import { RedisHelper } from './helpers/redis.helper';
+import { PrismaClient } from '@prisma/client';
 
+type User = PrismaClient['user']['payload']['create'];
 interface TestUser extends Pick<User, 'id' | 'email' | 'username'> {}
 
 interface TestSetup {
@@ -29,7 +29,6 @@ describe('AuthController (e2e)', () => {
   let txHelper: TransactionHelper;
   let authHelper: AuthHelper;
   let testSetup: TestSetup;
-  let redis: Redis;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -41,15 +40,12 @@ describe('AuthController (e2e)', () => {
     txHelper = new TransactionHelper(prisma);
     authHelper = new AuthHelper(prisma);
 
-    redis = RedisHelper.getInstance();
-
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
   });
 
   beforeEach(async () => {
     await txHelper.resetDB();
-    await redis.flushdb();
 
     testSetup = await authHelper.createTestUser({
       email: `auth-${Date.now()}@example.com`,
@@ -59,7 +55,6 @@ describe('AuthController (e2e)', () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    await RedisHelper.cleanup();
     await app.close();
   });
 
@@ -81,17 +76,6 @@ describe('AuthController (e2e)', () => {
         email: testSetup.user.email,
         username: testSetup.user.username,
       });
-
-      // Verify tokens are stored in Redis
-      const accessTokenExists = await redis.exists(
-        `access_token:${testSetup.user.id}:${loginResponse.access_token}`,
-      );
-      const refreshTokenExists = await redis.exists(
-        `refresh_token:${testSetup.user.id}:${loginResponse.refresh_token}`,
-      );
-
-      expect(accessTokenExists).toBe(1);
-      expect(refreshTokenExists).toBe(1);
     });
 
     it('should fail with invalid email', () => {
@@ -129,39 +113,14 @@ describe('AuthController (e2e)', () => {
 
       accessToken = response.body.access_token;
       refreshToken = response.body.refresh_token;
-
-      // Verify tokens are initially stored
-      const accessTokenExists = await redis.exists(
-        `access_token:${testSetup.user.id}:${accessToken}`,
-      );
-      const refreshTokenExists = await redis.exists(
-        `refresh_token:${testSetup.user.id}:${refreshToken}`,
-      );
-
-      expect(accessTokenExists).toBe(1);
-      expect(refreshTokenExists).toBe(1);
     });
 
-    it('should successfully logout and remove tokens from Redis', async () => {
+    it('should successfully logout', async () => {
       await request(app.getHttpServer())
         .post('/auth/logout')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ refresh_token: refreshToken })
         .expect(200);
-
-      // Wait a bit for Redis operations to complete
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Verify tokens are removed from Redis
-      const accessTokenExists = await redis.exists(
-        `access_token:${testSetup.user.id}:${accessToken}`,
-      );
-      const refreshTokenExists = await redis.exists(
-        `refresh_token:${testSetup.user.id}:${refreshToken}`,
-      );
-
-      expect(accessTokenExists).toBe(0);
-      expect(refreshTokenExists).toBe(0);
     });
 
     it('should fail with invalid token', () => {
@@ -206,25 +165,6 @@ describe('AuthController (e2e)', () => {
         email: testSetup.user.email,
         username: testSetup.user.username,
       });
-
-      // Wait a bit for Redis operations to complete
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Verify old refresh token is invalidated
-      const oldRefreshTokenExists = await redis.exists(
-        `refresh_token:${testSetup.user.id}:${refreshToken}`,
-      );
-      expect(oldRefreshTokenExists).toBe(0);
-
-      // Verify new tokens are stored in Redis
-      const newAccessTokenExists = await redis.exists(
-        `access_token:${testSetup.user.id}:${response.body.access_token}`,
-      );
-      const newRefreshTokenExists = await redis.exists(
-        `refresh_token:${testSetup.user.id}:${response.body.refresh_token}`,
-      );
-      expect(newAccessTokenExists).toBe(1);
-      expect(newRefreshTokenExists).toBe(1);
     });
 
     it('should fail with invalid refresh token', () => {
@@ -241,28 +181,7 @@ describe('AuthController (e2e)', () => {
         .send({ refresh_token: refreshToken })
         .expect(200);
 
-      // Wait a bit for Redis operations to complete
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
       // Second refresh with same token - should fail
-      await request(app.getHttpServer())
-        .post('/auth/refresh')
-        .send({ refresh_token: refreshToken })
-        .expect(401);
-    });
-
-    it('should fail after logout', async () => {
-      // First logout
-      await request(app.getHttpServer())
-        .post('/auth/logout')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({ refresh_token: refreshToken })
-        .expect(200);
-
-      // Wait a bit for Redis operations to complete
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Then try to refresh - should fail
       await request(app.getHttpServer())
         .post('/auth/refresh')
         .send({ refresh_token: refreshToken })

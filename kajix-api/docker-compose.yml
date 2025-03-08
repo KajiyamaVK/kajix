@@ -1,55 +1,32 @@
 version: '3.8'
+
 services:
   postgres:
-    image: postgres:16
+    image: postgres:15-alpine
     container_name: kajix_postgres
     ports:
       - '5432:5432'
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: kajix
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=kajix
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - kajix_network
+      - ./reset.sql:/docker-entrypoint-initdb.d/reset.sql
 
   postgres_test:
-    image: postgres:16
+    image: postgres:15-alpine
     container_name: kajix_postgres_test
     ports:
-      - '5433:5432' # Different port for test database
+      - '5433:5432'
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: kajix_test
-    networks:
-      - kajix_network
-
-  redis:
-    image: redis:7-alpine
-    container_name: kajix_redis
-    ports:
-      - '6379:6379'
-    command: redis-server --save 60 1 --loglevel warning
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=kajix_test
     volumes:
-      - redis_data:/data
-    networks:
-      - kajix_network
-
-  redis_test:
-    image: redis:7-alpine
-    container_name: kajix_redis_test
-    ports:
-      - '6380:6379' # Different port for test Redis
-    command: redis-server --save 60 1 --loglevel warning
-    networks:
-      - kajix_network
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./reset.sql:/docker-entrypoint-initdb.d/reset.sql
 
 volumes:
   postgres_data:
-  redis_data:
-
-networks:
-  kajix_network:
-    driver: bridge
+  postgres_test_data:
