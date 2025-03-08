@@ -106,3 +106,4 @@ public/worker-*.js.map
 *.pem
 .vercel
 .turbo
+.nvmrc
