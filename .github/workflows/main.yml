@@ -48,7 +48,11 @@ jobs:
         run: npm ci
 
       - name: Type Check API
-        run: npm run type-check:api
+        run: |
+          cd kajix-api && npm run prisma:generate
+          cd ..
+          npm run build:types
+          npm run type-check:api
 
       - name: Run API Tests
         env:
