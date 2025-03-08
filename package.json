@@ -8,7 +8,7 @@
     "test:api": "cd kajix-api && npm run test",
     "test:api:e2e": "cd kajix-api && npm run test:e2e",
     "test:db:migrate": "cd kajix-api && npm run test:db:migrate",
-    "prepare": "husky install",
+    "prepare": "node .husky/install.mjs",
     "lint": "eslint --config ./eslint.config.mjs \"{kajix-api/src,kajix-api/test,kajix-ui/app,kajix-ui/components,kajix-ui/hooks,kajix-ui/lib,kajix-ui/styles}/**/*.{js,jsx,ts,tsx}\" --fix",
     "lint:ui": "cd kajix-ui && npm run lint",
     "type-check": "npm run type-check:types && npm run build:types && npm run type-check:api && npm run type-check:ui",

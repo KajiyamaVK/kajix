@@ -16,6 +16,7 @@ env:
   EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
   DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5433/${{ secrets.POSTGRES_DATABASE }}?schema=public
   HUSKY: "0"
+  CI: "true"
 
 jobs:
   test-api:
