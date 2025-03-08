@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint --config ../eslint.config.mjs \"**/*.{js,jsx,ts,tsx}\" --fix"
+    "lint": "eslint --config ../eslint.config.mjs \"**/*.{js,jsx,ts,tsx}\" --fix",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "verify": "npm run lint && npm run type-check && npm run test && npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "latest",

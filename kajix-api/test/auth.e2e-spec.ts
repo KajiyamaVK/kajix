@@ -6,9 +6,8 @@ import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { TransactionHelper } from './helpers/transaction.helper';
 import { AuthHelper } from './helpers/auth.helper';
-import { PrismaClient } from '@prisma/client';
+import { User } from '@prisma/client';
 
-type User = PrismaClient['user']['payload']['create'];
 interface TestUser extends Pick<User, 'id' | 'email' | 'username'> {}
 
 interface TestSetup {

@@ -3,13 +3,24 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run test:all",
+    "test:all": "npm run type-check:types && npm run test:api",
+    "test:api": "cd kajix-api && npm run test",
+    "test:api:e2e": "cd kajix-api && npm run test:e2e",
+    "test:db:migrate": "cd kajix-api && npm run test:db:migrate",
     "prepare": "husky install",
     "lint": "eslint --config ./eslint.config.mjs \"{kajix-api/src,kajix-api/test,kajix-ui/app,kajix-ui/components,kajix-ui/hooks,kajix-ui/lib,kajix-ui/styles}/**/*.{js,jsx,ts,tsx}\" --fix",
+    "lint:ui": "cd kajix-ui && npm run lint",
+    "type-check": "npm run type-check:types && npm run build:types && npm run type-check:api && npm run type-check:ui",
+    "type-check:api": "cd kajix-api && tsc --noEmit",
+    "type-check:ui": "cd kajix-ui && tsc --noEmit",
+    "type-check:types": "cd packages/types && tsc --noEmit",
     "build": "npm run build:all",
     "build:types": "cd packages/types && npm run build",
+    "build:api": "cd kajix-api && npm run build",
+    "build:ui": "cd kajix-ui && npm run build",
     "watch:types": "cd packages/types && npm run watch",
-    "build:all": "npm run build:types && cd kajix-api && npm run build && cd ../kajix-ui && npm run build"
+    "build:all": "npm run build:types && npm run build:api && npm run build:ui"
   },
   "workspaces": [
     "kajix-api",

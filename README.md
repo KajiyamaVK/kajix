@@ -28,6 +28,7 @@ This monorepo contains multiple projects that share code and types, built with m
   - Nodemailer for email functionality
   - class-validator & class-transformer for DTO validation
   - Faker.js for generating test data
+  - Playwright for web scraping and browser automation
 
 ### kajix-ui (Frontend)
 

@@ -6,7 +6,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "type-check": "tsc --noEmit",
+    "verify": "npm run type-check && npm run build"
   },
   "files": [
     "dist"

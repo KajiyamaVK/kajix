@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
+echo "Running type checking..."
+npm run type-check
+
 echo "Running backend verification..."
-cd kajix-api && npm run build && npm run test:e2e
+npm run build:api && npm run test:api:e2e
 
 echo "Running frontend verification..."
-cd ../kajix-ui && npm run lint && npm run build
+npm run lint:ui && npm run build:ui

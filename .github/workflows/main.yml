@@ -44,12 +44,13 @@ jobs:
           cache: "npm"
           cache-dependency-path: kajix-api/package-lock.json
 
-      - name: Install API Dependencies
-        working-directory: ./kajix-api
+      - name: Install Dependencies
         run: npm ci
 
+      - name: Type Check API
+        run: npm run type-check:api
+
       - name: Run API Tests
-        working-directory: ./kajix-api
         env:
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           NODE_ENV: ${{ env.NODE_ENV }}
@@ -60,8 +61,8 @@ jobs:
           EMAIL_FROM: ${{ env.EMAIL_FROM }}
         run: |
           npm run test:db:migrate
-          npm run test
-          npm run test:e2e -- --forceExit
+          npm run test:api
+          npm run test:api:e2e -- --forceExit
 
   test-ui:
     name: Test UI
@@ -76,17 +77,17 @@ jobs:
           cache: "npm"
           cache-dependency-path: kajix-ui/package-lock.json
 
-      - name: Install UI Dependencies
-        working-directory: ./kajix-ui
+      - name: Install Dependencies
         run: npm ci
 
+      - name: Type Check UI
+        run: npm run type-check:ui
+
       - name: Run UI Linting
-        working-directory: ./kajix-ui
-        run: npm run lint
+        run: npm run lint:ui
 
       - name: Build UI
-        working-directory: ./kajix-ui
-        run: npm run build
+        run: npm run build:ui
 
   deploy-api:
     name: Deploy API

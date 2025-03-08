@@ -29,8 +29,10 @@
     "seed:users": "ts-node prisma/seeds/user.seed.ts",
     "prepare": "husky install",
     "lint-staged": "lint-staged",
-    "test:all": "npm run test && npm run test:e2e",
-    "verify": "npm run lint && npm run test:all && npm run build"
+    "prisma:generate": "prisma generate",
+    "test:all": "npm run prisma:generate && npm run test && npm run test:e2e",
+    "type-check": "tsc --noEmit",
+    "verify": "npm run lint && npm run type-check && npm run test:all && npm run build"
   },
   "dependencies": {
     "@faker-js/faker": "^9.4.0",
@@ -53,6 +55,7 @@
     "nodemailer": "^6.10.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "playwright": "^1.51.0",
     "prisma-factory": "^0.1.13",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1"

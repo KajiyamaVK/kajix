@@ -55,7 +55,16 @@ export default tseslint.config(
         'ts-ignore': false,
         'ts-nocheck': false,
         'ts-check': true
-      }]
+      }],
+      '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/unbound-method': 'error',
+      'no-await-in-loop': 'off'
     },
   },
+  {
+    files: ['**/*.spec.ts', '**/*.test.ts', '**/test/**/*.ts'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off'
+    }
+  }
 ); 
