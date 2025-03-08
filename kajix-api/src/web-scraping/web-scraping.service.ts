@@ -11,6 +11,9 @@ import {
   USER_AGENT,
   MAX_LINKS_PER_PAGE,
 } from './web-scraping.constants';
+import { PrismaService } from '../prisma/prisma.service';
+import { HtmlMarkdownService } from '../html-markdown/html-markdown.service';
+import { ScrappedContentDto } from './dto/scrapped-content.dto';
 
 /**
  * Service for web scraping operations using Playwright
@@ -19,6 +22,11 @@ import {
 export class WebScrapingService {
   private readonly logger = new Logger(WebScrapingService.name);
   private browser: Browser | null = null;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly htmlMarkdownService: HtmlMarkdownService,
+  ) {}
 
   /**
    * Initialize browser if needed and return an instance
@@ -41,6 +49,97 @@ export class WebScrapingService {
   }
 
   /**
+   * Save scrapped content to database and convert to markdown
+   */
+  private async saveScrappedContent(
+    baseUrl: string,
+    scrappedUrl: string,
+    htmlContent: string,
+  ): Promise<ScrappedContentDto> {
+    let markdown: string | undefined;
+
+    try {
+      // Convert HTML to Markdown
+      const result = await this.htmlMarkdownService.convertHtmlToMarkdown({
+        html: htmlContent,
+      });
+      markdown = result.markdown;
+    } catch (error) {
+      this.logger.warn(`Failed to convert HTML to Markdown: ${error.message}`);
+      markdown = undefined;
+    }
+
+    // Save to database
+    const saved = await this.prisma.scrappedContent.create({
+      data: {
+        baseUrl,
+        scrappedUrl,
+        htmlContent,
+        markdownContent: markdown || undefined, // Convert null to undefined
+      },
+    });
+
+    return {
+      ...saved,
+      markdownContent: saved.markdownContent || undefined, // Convert null to undefined
+    };
+  }
+
+  /**
+   * Scrape a single page and extract its content
+   */
+  private async scrapePage(
+    page: Page,
+    url: string,
+    visitedUrls: Set<string>,
+    scrapedPages: PageContent[],
+  ): Promise<void> {
+    if (visitedUrls.has(url)) {
+      return;
+    }
+
+    visitedUrls.add(url);
+
+    try {
+      await page.goto(url, {
+        timeout: WEB_SCRAPING_TIMEOUT,
+        waitUntil: 'domcontentloaded',
+      });
+
+      const content = await this.extractContent(page);
+      scrapedPages.push({
+        url,
+        ...content,
+        html: content.html,
+        isExternal: false, // Since we only follow internal links in scrapePage
+      });
+
+      // Extract and process links
+      const rawLinks = await this.extractLinks(page);
+      const baseUrlObj = new URL(url);
+
+      for (const link of rawLinks) {
+        try {
+          const fullUrl = new URL(link.url, url).href;
+          if (
+            !visitedUrls.has(fullUrl) &&
+            new URL(fullUrl).hostname === baseUrlObj.hostname
+          ) {
+            await this.scrapePage(page, fullUrl, visitedUrls, scrapedPages);
+          }
+        } catch (error) {
+          this.logger.warn(`Invalid URL ${link.url}: ${error.message}`);
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Failed to scrape ${url}: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to scrape ${url}: ${error.message}`,
+      );
+    }
+  }
+
+  /**
    * Scrape content from a given URL and all its linked pages
    * @param request Scraping request with URL
    * @returns ScrapingResponse with content from all pages
@@ -49,61 +148,32 @@ export class WebScrapingService {
     this.logger.log(`Scraping content from ${request.url}`);
 
     const browser = await this.getBrowser();
-    const page = await browser.newPage({
-      userAgent: USER_AGENT,
-    });
+    const page = await browser.newPage();
+    const visitedUrls = new Set<string>();
+    const scrapedPages: PageContent[] = [];
 
     try {
-      // Navigate to the URL with timeout
-      try {
-        await page.goto(request.url, {
-          timeout: WEB_SCRAPING_TIMEOUT,
-          waitUntil: 'domcontentloaded',
-        });
-      } catch (error) {
-        if (error.name === 'TimeoutError') {
-          throw new RequestTimeoutException('Navigation timeout exceeded');
-        }
-        throw new BadRequestException(`Failed to load URL: ${error.message}`);
-      }
+      await this.scrapePage(page, request.url, visitedUrls, scrapedPages);
 
-      // Extract links and content from the main page
-      let rawLinks;
-      let mainContent;
-
-      // Extract links first
-      try {
-        rawLinks = await this.extractLinks(page);
-      } catch (error) {
-        this.logger.error(`Failed to extract links: ${error.message}`);
-        throw new BadRequestException(
-          `Failed to extract links: ${error.message}`,
+      // Save all scrapped pages
+      for (const scrapedPage of scrapedPages) {
+        await this.saveScrappedContent(
+          request.url, // base URL
+          scrapedPage.url,
+          scrapedPage.html,
         );
       }
-
-      // Then extract content
-      try {
-        mainContent = await this.extractContent(page);
-      } catch (error) {
-        this.logger.error(`Failed to extract content: ${error.message}`);
-        throw new BadRequestException(
-          `Failed to extract content: ${error.message}`,
-        );
-      }
-
-      // Process links and create the content array
-      const content: PageContent[] = await this.processContent(
-        request.url,
-        rawLinks,
-        mainContent,
-        browser,
-      );
 
       return {
         sourceUrl: request.url,
-        content,
+        content: scrapedPages,
         scrapedAt: new Date(),
       };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
     } finally {
       await page.close();
     }

@@ -58,29 +58,36 @@ describe('Mail Service (e2e)', () => {
     );
   });
 
-  it('should handle real email sending in a separate test (disabled by default)', async () => {
+  // Skip the real email test in CI environment
+  it.skip('should handle real email sending in a separate test (manual testing only)', async () => {
     // This test is skipped by default to avoid sending real emails in automated tests
     // Remove the .skip to run it manually when needed
-
-    // Creating a custom provider for this test only to use the real service
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [MailModule],
     }).compile();
 
     const realMailService = moduleFixture.get<MailService>(MailService);
 
-    // Uncomment to send a real email during testing
-
-    await expect(
-      realMailService.sendEmail(
-        'victor.kajiyama@gmail.com',
+    try {
+      await realMailService.sendEmail(
+        'test@example.com', // Using a generic test email instead of a real one
         'Test Email from E2E Test - Real Service',
         'This is a real test email sent from the E2E test.',
         '<p>This is a <strong>real test email</strong> sent from the E2E test.</p>',
-      ),
-    ).resolves.not.toThrow();
-
-    // Clean up
-    await moduleFixture.close();
+      );
+    } finally {
+      await moduleFixture.close();
+    }
   }, 10000);
+
+  it('should handle email sending errors gracefully', async () => {
+    // Mock an error scenario
+    mockMailService.sendEmail.mockRejectedValueOnce(new Error('SMTP error'));
+
+    const to = 'test@example.com';
+    const subject = 'Test Email';
+    const text = 'Test content';
+
+    await expect(mailService.sendEmail(to, subject, text)).rejects.toThrow();
+  });
 });

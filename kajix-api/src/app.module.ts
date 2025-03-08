@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { LLMsModule } from './llms/llms.module';
 import { MailModule } from './mail/mail.module';
 import { WebScrapingModule } from './web-scraping/web-scraping.module';
+import { HtmlMarkdownModule } from './html-markdown/html-markdown.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { WebScrapingModule } from './web-scraping/web-scraping.module';
     LLMsModule,
     MailModule,
     WebScrapingModule,
+    HtmlMarkdownModule,
   ],
 })
 export class AppModule {}

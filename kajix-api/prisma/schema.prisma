@@ -63,3 +63,16 @@ model TmpToken {
 
   @@map("tmp_tokens")
 }
+
+model ScrappedContent {
+  id              String   @id @default(uuid())
+  baseUrl         String
+  scrappedUrl     String   @unique
+  lastScrappedAt  DateTime @default(now())
+  htmlContent     String   @db.Text
+  markdownContent String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("scrapped_contents")
+}
