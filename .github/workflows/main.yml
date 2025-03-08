@@ -46,6 +46,7 @@ jobs:
           cache-dependency-path: kajix-api/package-lock.json
 
       - name: Install Dependencies
+        working-directory: ./kajix-api
         run: npm ci
 
       - name: Type Check API
