@@ -72,7 +72,7 @@ jobs:
 
       - name: Type Check API
         working-directory: ./kajix-api
-        run: npm run type-check:api
+        run: npm run type-check
 
       - name: Run API Tests
         working-directory: ./kajix-api
