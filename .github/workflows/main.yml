@@ -35,6 +35,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    defaults:
+      run:
+        working-directory: ./kajix-api
+
     steps:
       - uses: actions/checkout@v4
 
@@ -46,13 +50,11 @@ jobs:
           cache-dependency-path: kajix-api/package-lock.json
 
       - name: Install Dependencies
-        working-directory: ./kajix-api
         run: npm ci
 
       - name: Type Check API
         run: |
-          cd kajix-api && npm run prisma:generate
-          cd ..
+          npm run prisma:generate
           npm run build:types
           npm run type-check:api
 
