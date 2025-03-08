@@ -14,6 +14,7 @@ env:
   EMAIL_USER: ${{ secrets.EMAIL_USER }}
   EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
   EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+  DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5433/${{ secrets.POSTGRES_DATABASE }}?schema=public
 
 jobs:
   test-api:
@@ -56,7 +57,7 @@ jobs:
 
       - name: Run API Tests
         env:
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
           NODE_ENV: ${{ env.NODE_ENV }}
           EMAIL_HOST: ${{ env.EMAIL_HOST }}
           EMAIL_PORT: ${{ env.EMAIL_PORT }}
