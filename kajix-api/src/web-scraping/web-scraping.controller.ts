@@ -109,7 +109,20 @@ export class WebScrapingController {
   async scrapeLinks(
     @Body() request: ScrapingRequest,
   ): Promise<ScrapingResponse> {
-    return this.webScrapingService.scrapeLinks(request);
+    try {
+      // Validate URL before proceeding
+      const url = new URL(request.url);
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        throw new BadRequestException('URL must use HTTP or HTTPS protocol');
+      }
+      request.url = url.toString(); // Normalize the URL
+      return this.webScrapingService.scrapeLinks(request);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Invalid URL provided');
+    }
   }
 
   @Get('content')

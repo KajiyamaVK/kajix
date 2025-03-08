@@ -111,7 +111,7 @@ export class WebScrapingService {
         url,
         ...content,
         html: content.html,
-        isExternal: false, // Since we only follow internal links in scrapePage
+        isExternal: false,
       });
 
       // Extract and process links
@@ -133,6 +133,20 @@ export class WebScrapingService {
       }
     } catch (error) {
       this.logger.error(`Failed to scrape ${url}: ${error.message}`);
+
+      // Handle specific error types
+      if (error.name === 'TimeoutError') {
+        throw new RequestTimeoutException(`Navigation timeout for ${url}`);
+      }
+
+      // Handle navigation errors
+      if (error.name === 'NavigationError') {
+        throw new BadRequestException(
+          `Failed to navigate to ${url}: ${error.message}`,
+        );
+      }
+
+      // For other errors, preserve the original error message
       throw new BadRequestException(
         `Failed to scrape ${url}: ${error.message}`,
       );
