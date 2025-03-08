@@ -65,7 +65,7 @@ jobs:
         working-directory: ./kajix-api
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
-        run: npm run prisma:generate
+        run: npx prisma generate
 
       - name: Type Check API
         run: |
