@@ -61,9 +61,14 @@ jobs:
         working-directory: ./packages/types
         run: npm ci
 
+      - name: Generate Prisma Client
+        working-directory: ./kajix-api
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+        run: npm run prisma:generate
+
       - name: Type Check API
         run: |
-          cd kajix-api && npm run prisma:generate
           cd ..
           npm run build:types
           cd kajix-api && npm run type-check:api
