@@ -17,6 +17,12 @@ dist/
 build/
 out/
 
+# Types package generated files
+packages/types/src/**/*.js
+packages/types/src/**/*.js.map
+packages/types/src/**/*.d.ts
+!packages/types/src/resolve-modules.js
+
 # Environment files
 .env
 .env.*
