@@ -85,9 +85,8 @@ jobs:
           EMAIL_PASSWORD: ${{ env.EMAIL_PASSWORD }}
           EMAIL_FROM: ${{ env.EMAIL_FROM }}
         run: |
-          npm run test:db:migrate
-          npm run test:api
-          npm run test:api:e2e -- --forceExit
+          npm run test
+          npm run test:e2e -- --forceExit
 
   test-ui:
     name: Test UI
