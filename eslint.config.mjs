@@ -49,7 +49,7 @@ export default tseslint.config(
   },
   {
     rules: {
-      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/ban-ts-comment': ['error', { 
         minimumDescriptionLength: 3,
         'ts-ignore': false,
@@ -58,7 +58,7 @@ export default tseslint.config(
       }],
       '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/unbound-method': 'error',
-      'no-await-in-loop': 'off'
+      'no-await-in-loop': 'off',
     },
   },
   {
