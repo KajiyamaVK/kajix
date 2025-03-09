@@ -3,5 +3,6 @@
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"],
   "references": [
     { "path": "../packages/types" }
-  ]
+  ],
+  "include": ["src/**/*", "../packages/types/dist/**/*"]
 }

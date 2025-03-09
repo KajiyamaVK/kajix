@@ -21,7 +21,8 @@
     "paths": {
       "@types": ["../packages/types/dist"],
       "@types/*": ["../packages/types/dist/*"]
-    }
+    },
+    "rootDir": "./"
   },
   "references": [
     { "path": "../packages/types" }
