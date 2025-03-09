@@ -99,26 +99,27 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('POST /auth/logout', () => {
-    let accessToken: string;
-    let refreshToken: string;
-
-    beforeEach(async () => {
-      const response = await request(app.getHttpServer())
+    it('should successfully logout a user', async () => {
+      // Login first to get tokens
+      const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
         .send({
           email: testSetup.user.email,
           password: testSetup.password,
-        });
+        })
+        .expect(201);
 
-      accessToken = response.body.access_token;
-      refreshToken = response.body.refresh_token;
-    });
+      console.log('Login response:', loginResponse.body);
+      console.log(
+        'JWT Secret:',
+        process.env.JWT_SECRET || 'test-jwt-secret-key',
+      );
 
-    it('should successfully logout', async () => {
-      await request(app.getHttpServer())
+      // Attempt logout
+      return request(app.getHttpServer())
         .post('/auth/logout')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({ refresh_token: refreshToken })
+        .set(authHelper.getAuthHeader(loginResponse.body.access_token))
+        .send({ refresh_token: loginResponse.body.refresh_token })
         .expect(200);
     });
 

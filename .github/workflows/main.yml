@@ -20,6 +20,7 @@ env:
   MOCK_EMAIL: "true"
   MOCK_SCRAPING: "true"
   JEST_TIMEOUT: "10000"
+  JWT_SECRET: "test-jwt-secret-key"
 
 jobs:
   test-api:
