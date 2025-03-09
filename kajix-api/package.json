@@ -30,6 +30,7 @@
     "prepare": "husky install",
     "lint-staged": "lint-staged",
     "prisma:generate": "prisma generate",
+    "dev": "nest start --watch",
     "test:all": "npm run prisma:generate && npm run test && npm run test:e2e",
     "type-check": "tsc --noEmit",
     "verify": "npm run lint && npm run type-check && npm run test:all && npm run build"
