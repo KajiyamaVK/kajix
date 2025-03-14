@@ -1,7 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WebScrapingService } from '../../src/web-scraping/web-scraping.service';
-import { BadRequestException, RequestTimeoutException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Logger,
+  RequestTimeoutException,
+} from '@nestjs/common';
 import { chromium } from 'playwright';
+import { PrismaService } from '../../src/prisma/prisma.service';
+import { HtmlMarkdownService } from '../../src/html-markdown/html-markdown.service';
 
 // Mock Playwright
 jest.mock('playwright', () => ({
@@ -230,5 +236,207 @@ describe('WebScrapingService', () => {
       await service.onModuleDestroy();
       expect(mockBrowser.close).toHaveBeenCalled();
     });
+  });
+});
+
+// Add upsert functionality tests with complete service dependencies
+describe('WebScrapingService - Upsert Functionality', () => {
+  let service: WebScrapingService;
+  let prismaService: any;
+  let htmlMarkdownService: any;
+  let mockPage: any;
+  let mockBrowser: any;
+
+  // Mock data
+  const baseUrl = 'https://example.com';
+  const scrappedUrl = 'https://example.com/page1';
+  const htmlContent = '<html><body><h1>Test Content</h1></body></html>';
+  const markdownContent = '# Test Content';
+
+  // First scrape timestamp
+  const firstScrapeDate = new Date('2023-01-01T10:00:00Z');
+
+  // Later scrape timestamp
+  const secondScrapeDate = new Date('2023-01-02T10:00:00Z');
+
+  beforeEach(async () => {
+    // Create mock services
+    const mockPrismaService = {
+      scrappedContent: {
+        upsert: jest.fn(),
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+        findFirst: jest.fn(),
+        findFirstOrThrow: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
+        create: jest.fn(),
+        createMany: jest.fn(),
+        delete: jest.fn(),
+        update: jest.fn(),
+        deleteMany: jest.fn(),
+        updateMany: jest.fn(),
+        count: jest.fn(),
+        aggregate: jest.fn(),
+        groupBy: jest.fn(),
+      },
+    };
+
+    const mockHtmlMarkdownService = {
+      convertHtmlToMarkdown: jest.fn().mockResolvedValue({
+        markdown: markdownContent,
+      }),
+    };
+
+    // Create mock browser and page
+    mockPage = {
+      goto: jest.fn(),
+      evaluate: jest.fn(),
+      close: jest.fn(),
+    };
+
+    mockBrowser = {
+      newPage: jest.fn().mockResolvedValue(mockPage),
+      close: jest.fn(),
+    };
+
+    (chromium.launch as jest.Mock).mockResolvedValue(mockBrowser);
+
+    // Disable logger in tests
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        WebScrapingService,
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
+        {
+          provide: HtmlMarkdownService,
+          useValue: mockHtmlMarkdownService,
+        },
+      ],
+    }).compile();
+
+    service = module.get<WebScrapingService>(WebScrapingService);
+    prismaService = module.get(PrismaService);
+    htmlMarkdownService = module.get(HtmlMarkdownService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should update existing content when scraping a URL that has already been scraped', async () => {
+    // Mock the success page navigation and evaluation
+    mockPage.goto.mockResolvedValue(undefined);
+    mockPage.evaluate
+      .mockResolvedValueOnce([]) // No links
+      .mockResolvedValueOnce({
+        title: 'Test Page',
+        description: 'Test description',
+        text: 'Test content',
+        html: htmlContent,
+      });
+
+    // First time scrape - mock upsert creating a new record
+    prismaService.scrappedContent.upsert.mockResolvedValueOnce({
+      id: 'test-id-1',
+      baseUrl,
+      scrappedUrl,
+      htmlContent,
+      markdownContent,
+      lastScrappedAt: firstScrapeDate,
+      createdAt: firstScrapeDate,
+      updatedAt: firstScrapeDate,
+    });
+
+    // Second time scrape - mock upsert updating existing record
+    prismaService.scrappedContent.upsert.mockResolvedValueOnce({
+      id: 'test-id-1',
+      baseUrl,
+      scrappedUrl,
+      htmlContent,
+      markdownContent,
+      lastScrappedAt: secondScrapeDate, // Notice this is updated
+      createdAt: firstScrapeDate, // This remains the same
+      updatedAt: secondScrapeDate, // This is updated
+    });
+
+    // Make the first scrape request
+    await service.scrapeLinks({ url: baseUrl });
+
+    // Verify first upsert call - should create a new record
+    expect(prismaService.scrappedContent.upsert).toHaveBeenCalledWith({
+      where: { scrappedUrl: baseUrl },
+      update: expect.objectContaining({
+        baseUrl,
+        scrappedUrl: baseUrl,
+        htmlContent,
+        lastScrappedAt: expect.any(Date),
+      }),
+      create: expect.objectContaining({
+        baseUrl,
+        scrappedUrl: baseUrl,
+        htmlContent,
+        lastScrappedAt: expect.any(Date),
+      }),
+    });
+
+    // Clear upsert mock to check second call
+    prismaService.scrappedContent.upsert.mockClear();
+
+    // Make the second scrape request to the same URL
+    await service.scrapeLinks({ url: baseUrl });
+
+    // Verify second upsert call - should update the existing record
+    expect(prismaService.scrappedContent.upsert).toHaveBeenCalledWith({
+      where: { scrappedUrl: baseUrl },
+      update: expect.objectContaining({
+        baseUrl,
+        scrappedUrl: baseUrl,
+        htmlContent,
+        lastScrappedAt: expect.any(Date),
+      }),
+      create: expect.objectContaining({
+        baseUrl,
+        scrappedUrl: baseUrl,
+        htmlContent,
+        lastScrappedAt: expect.any(Date),
+      }),
+    });
+  });
+
+  it('should include markdown content in the response when scraping a page', async () => {
+    // Mock the success page navigation and evaluation
+    mockPage.goto.mockResolvedValue(undefined);
+    mockPage.evaluate
+      .mockResolvedValueOnce([]) // No links
+      .mockResolvedValueOnce({
+        title: 'Test Page',
+        description: 'Test description',
+        text: 'Test content',
+        html: htmlContent,
+      });
+
+    // Mock upsert creating a new record
+    prismaService.scrappedContent.upsert.mockResolvedValueOnce({
+      id: 'test-id-1',
+      baseUrl,
+      scrappedUrl: baseUrl,
+      htmlContent,
+      markdownContent,
+      lastScrappedAt: firstScrapeDate,
+      createdAt: firstScrapeDate,
+      updatedAt: firstScrapeDate,
+    });
+
+    // Make the scrape request
+    const result = await service.scrapeLinks({ url: baseUrl });
+
+    // Verify the response includes the markdown
+    expect(result.content[0]).toHaveProperty('html', htmlContent);
+    expect(result.content[0]).toHaveProperty('markdown', markdownContent);
   });
 });

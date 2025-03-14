@@ -45,13 +45,26 @@ const llmCompanies = [
 
 export async function createRealLLMCompanies() {
   return Promise.all(
-    llmCompanies.map((companyName) =>
-      prisma.lLMCompany.create({
-        data: {
-          companyName,
-          isActive: true,
-        },
-      }),
-    ),
+    llmCompanies.map(async (companyName) => {
+      // Check if the company already exists
+      const existingCompany = await prisma.lLMCompany.findUnique({
+        where: { companyName },
+      });
+
+      if (!existingCompany) {
+        // Only create if it doesn't exist
+        return prisma.lLMCompany.create({
+          data: {
+            companyName,
+            isActive: true,
+          },
+        });
+      } else {
+        console.log(
+          `Company ${companyName} already exists, skipping creation.`,
+        );
+        return existingCompany;
+      }
+    }),
   );
 }

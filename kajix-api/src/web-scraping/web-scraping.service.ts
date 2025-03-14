@@ -169,13 +169,34 @@ export class WebScrapingService {
     try {
       await this.scrapePage(page, request.url, visitedUrls, scrapedPages);
 
-      // Save all scrapped pages
-      for (const scrapedPage of scrapedPages) {
-        await this.saveScrappedContent(
-          request.url, // base URL
-          scrapedPage.url,
-          scrapedPage.html,
-        );
+      // Save all scrapped pages and add markdown content
+      for (let i = 0; i < scrapedPages.length; i++) {
+        const scrapedPage = scrapedPages[i];
+
+        // Convert HTML to markdown
+        try {
+          const result = await this.htmlMarkdownService.convertHtmlToMarkdown({
+            html: scrapedPage.html,
+          });
+
+          // Update the scraped page with markdown
+          scrapedPages[i] = {
+            ...scrapedPage,
+            markdown: result.markdown,
+          };
+
+          // Save to database
+          await this.saveScrappedContent(
+            request.url, // base URL
+            scrapedPage.url,
+            scrapedPage.html,
+          );
+        } catch (error) {
+          this.logger.warn(
+            `Failed to convert HTML to Markdown: ${error.message}`,
+          );
+          // Continue with other pages even if conversion fails
+        }
       }
 
       return {

@@ -20,6 +20,7 @@ describe('LLMsController (e2e)', () => {
     token: string;
     llmCompany: any;
     llmModel: any;
+    llmType: any;
   };
 
   beforeAll(async () => {
@@ -45,7 +46,16 @@ describe('LLMsController (e2e)', () => {
       email: `llm-${timestamp}@example.com`,
       username: `llm-${timestamp}`,
     });
-    testSetup = { user, token, llmCompany: null, llmModel: null };
+
+    // Create a standard LLM type for tests
+    const llmType = await prisma.stdLLMType.create({
+      data: {
+        type: `Test Type ${timestamp}`,
+        isActive: true,
+      },
+    });
+
+    testSetup = { user, token, llmCompany: null, llmModel: null, llmType };
   });
 
   afterAll(async () => {
@@ -278,9 +288,11 @@ describe('LLMsController (e2e)', () => {
           displayName: 'Test Model',
           modelName: 'test-model',
           llmCompanyId: testSetup.llmCompany.id,
+          typeId: testSetup.llmType.id,
         },
         include: {
           llmCompany: true,
+          type: true,
         },
       });
       testSetup.llmModel = llmModel;
@@ -296,6 +308,7 @@ describe('LLMsController (e2e)', () => {
           displayName: llmModel.displayName,
           modelName: llmModel.modelName,
           llmCompanyId: llmModel.llmCompanyId,
+          typeId: llmModel.typeId,
           createdAt: llmModel.createdAt.toISOString(),
           updatedAt: llmModel.updatedAt.toISOString(),
           llmCompany: {
@@ -304,6 +317,13 @@ describe('LLMsController (e2e)', () => {
             isActive: testSetup.llmCompany.isActive,
             createdAt: testSetup.llmCompany.createdAt.toISOString(),
             updatedAt: testSetup.llmCompany.updatedAt.toISOString(),
+          },
+          type: {
+            id: testSetup.llmType.id,
+            type: testSetup.llmType.type,
+            isActive: testSetup.llmType.isActive,
+            createdAt: testSetup.llmType.createdAt.toISOString(),
+            updatedAt: testSetup.llmType.updatedAt.toISOString(),
           },
         },
       ]);
@@ -328,9 +348,11 @@ describe('LLMsController (e2e)', () => {
           displayName: 'Test Model',
           modelName: 'test-model',
           llmCompanyId: llmCompany.id,
+          typeId: testSetup.llmType.id,
         },
         include: {
           llmCompany: true,
+          type: true,
         },
       });
       testSetup.llmModel = llmModel;
@@ -346,6 +368,7 @@ describe('LLMsController (e2e)', () => {
           displayName: testSetup.llmModel.displayName,
           modelName: testSetup.llmModel.modelName,
           llmCompanyId: testSetup.llmModel.llmCompanyId,
+          typeId: testSetup.llmModel.typeId,
           createdAt: testSetup.llmModel.createdAt.toISOString(),
           updatedAt: testSetup.llmModel.updatedAt.toISOString(),
           llmCompany: {
@@ -354,6 +377,13 @@ describe('LLMsController (e2e)', () => {
             isActive: testSetup.llmCompany.isActive,
             createdAt: testSetup.llmCompany.createdAt.toISOString(),
             updatedAt: testSetup.llmCompany.updatedAt.toISOString(),
+          },
+          type: {
+            id: testSetup.llmType.id,
+            type: testSetup.llmType.type,
+            isActive: testSetup.llmType.isActive,
+            createdAt: testSetup.llmType.createdAt.toISOString(),
+            updatedAt: testSetup.llmType.updatedAt.toISOString(),
           },
         });
     });
@@ -381,11 +411,12 @@ describe('LLMsController (e2e)', () => {
       testSetup.llmCompany = llmCompany;
     });
 
-    it('should create an LLM model', () => {
+    it('should create an LLM model', async () => {
       const createLLMModelDto: CreateLLMModelDto = {
         displayName: 'New Model',
         modelName: 'new-model',
         llmCompanyId: testSetup.llmCompany.id,
+        typeId: testSetup.llmType.id,
       };
 
       return request(app.getHttpServer())
@@ -453,9 +484,7 @@ describe('LLMsController (e2e)', () => {
           displayName: 'Test Model',
           modelName: 'test-model',
           llmCompanyId: llmCompany.id,
-        },
-        include: {
-          llmCompany: true,
+          typeId: testSetup.llmType.id,
         },
       });
       testSetup.llmModel = llmModel;
@@ -522,9 +551,7 @@ describe('LLMsController (e2e)', () => {
           displayName: 'Test Model',
           modelName: 'test-model',
           llmCompanyId: llmCompany.id,
-        },
-        include: {
-          llmCompany: true,
+          typeId: testSetup.llmType.id,
         },
       });
       testSetup.llmModel = llmModel;

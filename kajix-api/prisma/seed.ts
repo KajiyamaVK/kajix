@@ -8,11 +8,16 @@ import {
   createRealLLMModels,
   createManyLLMModels,
 } from './factories/llm-model.factory';
+import { seedStdLlmTypes } from './seeds/std-llm-types.seed';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting seeding...');
+
+  // Seed standard LLM types
+  console.log('Seeding standard LLM types...');
+  await seedStdLlmTypes(prisma);
 
   // Create real LLM companies
   console.log('Creating real LLM companies...');

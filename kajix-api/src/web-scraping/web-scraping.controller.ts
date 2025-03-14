@@ -8,12 +8,68 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { WebScrapingService } from './web-scraping.service';
-import { ScrapingRequest, ScrapingResponse } from '@types';
+import { ScrapingResponse } from '@types';
 import { ScrappedContentDto } from './dto/scrapped-content.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { ApiOperation, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiQuery,
+  ApiBody,
+  ApiProperty,
+} from '@nestjs/swagger';
 import { ContentType } from './dto/content-type.enum';
+import { ScrapingRequestDto } from './dto/scraping-request.dto';
+import { ScrapingResponseDto } from './dto/scraping-response.dto';
 
+/**
+ * Generic paginated response DTO for Swagger documentation
+ */
+export class PaginationMetaDto {
+  @ApiProperty({
+    description: 'Total number of items',
+    example: 100,
+  })
+  total: number;
+
+  @ApiProperty({
+    description: 'Current page number (1-based)',
+    example: 1,
+  })
+  page: number;
+
+  @ApiProperty({
+    description: 'Number of items per page',
+    example: 10,
+  })
+  pageSize: number;
+
+  @ApiProperty({
+    description: 'Total number of pages',
+    example: 10,
+  })
+  totalPages: number;
+}
+
+/**
+ * Generic paginated response DTO for Swagger documentation
+ */
+export class PaginatedResponseDto<T> {
+  @ApiProperty({
+    description: 'Array of items',
+    isArray: true,
+  })
+  data: T[];
+
+  @ApiProperty({
+    description: 'Pagination metadata',
+    type: PaginationMetaDto,
+  })
+  meta: PaginationMetaDto;
+}
+
+// For internal use, not exposed in Swagger
 interface PaginatedResponse<T> {
   data: T[];
   meta: {
@@ -87,7 +143,7 @@ function filterContent(
 /**
  * Controller for web scraping operations
  */
-@ApiTags('web-scraping')
+@ApiTags('Web Scraping')
 @Controller('web-scraping')
 export class WebScrapingController {
   constructor(
@@ -101,27 +157,79 @@ export class WebScrapingController {
    * @returns All links found on the page
    */
   @Post('scrape')
-  @ApiOperation({ summary: 'Scrape content from a URL and its linked pages' })
+  @ApiOperation({ summary: 'Scrape content from a URL and its links' })
+  @ApiBody({
+    type: ScrapingRequestDto,
+    description: 'URL and options for scraping',
+    required: true,
+    examples: {
+      example1: {
+        summary: 'Basic scrape request',
+        description: 'A request to scrape a URL',
+        value: {
+          url: 'https://example.com',
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: 201,
     description: 'Content successfully scraped and saved',
+    content: {
+      'application/json': {
+        schema: {
+          $ref: '#/components/schemas/ScrapingResponseDto',
+          example: {
+            sourceUrl: 'https://example.com',
+            content: [
+              {
+                url: 'https://example.com',
+                isExternal: false,
+                title: 'Example Domain',
+                description: 'This domain is for use in examples',
+                text: 'Example Domain This domain is for use in examples.',
+                html: '<html><body><h1>Example Domain</h1><p>This domain is for use in examples.</p></body></html>',
+                markdown:
+                  '# Example Domain\n\nThis domain is for use in examples.',
+              },
+            ],
+            scrapedAt: '2023-01-01T12:00:00.000Z',
+          },
+        },
+      },
+    },
   })
   async scrapeLinks(
-    @Body() request: ScrapingRequest,
+    @Body() request: ScrapingRequestDto,
   ): Promise<ScrapingResponse> {
     try {
-      // Validate URL before proceeding
-      const url = new URL(request.url);
-      if (!['http:', 'https:'].includes(url.protocol)) {
-        throw new BadRequestException('URL must use HTTP or HTTPS protocol');
+      // Check if URL has protocol, if not prepend https://
+      if (request.url && !request.url.match(/^https?:\/\//i)) {
+        request.url = `https://${request.url}`;
       }
-      request.url = url.toString(); // Normalize the URL
+
+      // Validate URL before proceeding
+      try {
+        const url = new URL(request.url);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          throw new BadRequestException('URL must use HTTP or HTTPS protocol');
+        }
+        request.url = url.toString(); // Normalize the URL
+      } catch (error) {
+        if (error instanceof BadRequestException) {
+          throw error;
+        }
+        throw new BadRequestException(`Invalid URL format: ${error.message}`);
+      }
+
       return this.webScrapingService.scrapeLinks(request);
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException('Invalid URL provided');
+      throw new BadRequestException(
+        `Error processing request: ${error.message}`,
+      );
     }
   }
 
@@ -131,18 +239,21 @@ export class WebScrapingController {
     name: 'baseUrl',
     required: false,
     description: 'Filter by base URL',
+    example: 'https://example.com',
   })
   @ApiQuery({
     name: 'page',
     required: false,
     description: 'Page number (1-based)',
     type: 'number',
+    example: 1,
   })
   @ApiQuery({
     name: 'pageSize',
     required: false,
     description: 'Number of items per page',
     type: 'number',
+    example: 10,
   })
   @ApiQuery({
     name: 'contentType',
@@ -150,10 +261,51 @@ export class WebScrapingController {
     description: 'Type of content to return (markdown, html, or both)',
     enum: ContentType,
     default: ContentType.MARKDOWN,
+    example: ContentType.MARKDOWN,
   })
   @ApiResponse({
     status: 200,
     description: 'List of scrapped content with pagination metadata',
+    content: {
+      'application/json': {
+        schema: {
+          properties: {
+            data: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/ScrappedContentDto',
+              },
+              description: 'Array of scrapped content items',
+            },
+            meta: {
+              type: 'object',
+              properties: {
+                total: {
+                  type: 'number',
+                  example: 100,
+                  description: 'Total number of items',
+                },
+                page: {
+                  type: 'number',
+                  example: 1,
+                  description: 'Current page number',
+                },
+                pageSize: {
+                  type: 'number',
+                  example: 10,
+                  description: 'Number of items per page',
+                },
+                totalPages: {
+                  type: 'number',
+                  example: 10,
+                  description: 'Total number of pages',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   })
   async getAllContent(
     @Query('baseUrl') baseUrl?: string,
@@ -199,11 +351,22 @@ export class WebScrapingController {
     description: 'Type of content to return (markdown, html, or both)',
     enum: ContentType,
     default: ContentType.MARKDOWN,
+    example: ContentType.MARKDOWN,
   })
   @ApiResponse({
     status: 200,
     description: 'The scrapped content',
-    type: ScrappedContentDto,
+    content: {
+      'application/json': {
+        schema: {
+          $ref: '#/components/schemas/ScrappedContentDto',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Content not found',
   })
   async getContentById(
     @Param('id') id: string,

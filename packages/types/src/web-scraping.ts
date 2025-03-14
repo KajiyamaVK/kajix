@@ -60,6 +60,11 @@ export interface PageContent {
    * HTML content of the page
    */
   html: string;
+
+  /**
+   * Markdown version of the HTML content
+   */
+  markdown?: string;
 }
 
 /**

@@ -1,20 +1,18 @@
 import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateLLMDto {
+export class CreateStdLlmTypeDto {
   @ApiProperty({
-    description: 'Name of the LLM company',
-    example: 'OpenAI',
-    required: true,
+    description: 'The LLM type name',
+    example: 'Embedding',
   })
   @IsString()
   @IsNotEmpty()
-  companyName: string;
+  type: string;
 
   @ApiProperty({
-    description: 'Indicates if the LLM company is active',
+    description: 'Whether the LLM type is active',
     example: true,
-    required: false,
     default: true,
   })
   @IsBoolean()

@@ -20,12 +20,22 @@ export class LLMsService {
     displayName: true,
     modelName: true,
     llmCompanyId: true,
+    typeId: true,
     createdAt: true,
     updatedAt: true,
     llmCompany: {
       select: {
         id: true,
         companyName: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    },
+    type: {
+      select: {
+        id: true,
+        type: true,
         isActive: true,
         createdAt: true,
         updatedAt: true,
@@ -159,6 +169,15 @@ export class LLMsService {
         throw new BadRequestException('Invalid LLM company ID');
       }
 
+      // Validate typeId (now required)
+      const type = await this.prisma.stdLLMType.findUnique({
+        where: { id: createLlmModelDto.typeId },
+      });
+
+      if (!type) {
+        throw new BadRequestException('Invalid LLM type ID');
+      }
+
       return await this.prisma.lLMModel.create({
         data: createLlmModelDto,
         select: this.defaultModelSelect,
@@ -167,7 +186,9 @@ export class LLMsService {
       if (error instanceof BadRequestException) throw error;
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === PrismaErrorCode.FOREIGN_KEY_CONSTRAINT_VIOLATION) {
-          throw new BadRequestException('Invalid LLM company ID');
+          throw new BadRequestException(
+            'Invalid reference ID (company or type)',
+          );
         }
       }
       throw new InternalServerErrorException('Failed to create LLM model');
@@ -214,6 +235,17 @@ export class LLMsService {
         }
       }
 
+      // Validate typeId if provided
+      if (updateLlmModelDto.typeId !== undefined) {
+        const type = await this.prisma.stdLLMType.findUnique({
+          where: { id: updateLlmModelDto.typeId },
+        });
+
+        if (!type) {
+          throw new BadRequestException('Invalid LLM type ID');
+        }
+      }
+
       return await this.prisma.lLMModel.update({
         where: { id },
         data: updateLlmModelDto,
@@ -226,7 +258,9 @@ export class LLMsService {
           case PrismaErrorCode.RECORD_NOT_FOUND:
             throw new NotFoundException(`LLM model with ID ${id} not found`);
           case PrismaErrorCode.FOREIGN_KEY_CONSTRAINT_VIOLATION:
-            throw new BadRequestException('Invalid LLM company ID');
+            throw new BadRequestException(
+              'Invalid reference ID (company or type)',
+            );
           default:
             throw new InternalServerErrorException('Database operation failed');
         }

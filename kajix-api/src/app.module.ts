@@ -7,6 +7,7 @@ import { LLMsModule } from './llms/llms.module';
 import { MailModule } from './mail/mail.module';
 import { WebScrapingModule } from './web-scraping/web-scraping.module';
 import { HtmlMarkdownModule } from './html-markdown/html-markdown.module';
+import { StdLlmTypeModule } from './std-llm-type/std-llm-type.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { HtmlMarkdownModule } from './html-markdown/html-markdown.module';
     MailModule,
     WebScrapingModule,
     HtmlMarkdownModule,
+    StdLlmTypeModule,
   ],
 })
 export class AppModule {}
