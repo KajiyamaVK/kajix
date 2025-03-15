@@ -3,6 +3,19 @@
  */
 
 /**
+ * Standard LLM types
+ */
+export enum LLMType {
+  TEXT = "text",
+  AUDIO = "audio",
+  WEB_SEARCH = "web_search",
+  TRANSCRIPTION = "transcription",
+  SPEECH = "speech",
+  IMAGE = "image",
+  EMBEDDING = "embedding",
+}
+
+/**
  * LLM Company data
  */
 export interface LLMCompany {

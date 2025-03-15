@@ -15,7 +15,7 @@ async function main() {
 
   // Create some additional random LLM companies
   console.log('Creating random LLM companies...');
-  await createManyLLMCompanies(5);
+  await createManyLLMCompanies(2);
 
   console.log('✅ LLM Seeding completed!');
 }

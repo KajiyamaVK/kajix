@@ -30,18 +30,7 @@ export async function createManyLLMCompanies(
   );
 }
 
-const llmCompanies = [
-  'OpenAI',
-  'Anthropic',
-  'Google DeepMind',
-  'Cohere',
-  'AI21 Labs',
-  'Mistral AI',
-  'DeepSeek',
-  'Meta AI',
-  'Character AI',
-  'Inflection AI',
-];
+const llmCompanies = ['OpenAI', 'Google DeepMind', 'DeepSeek', 'Anthropic'];
 
 export async function createRealLLMCompanies() {
   return Promise.all(

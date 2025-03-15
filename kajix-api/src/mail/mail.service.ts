@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { emailLayout } from '../../layouts/emails';
 
 @Injectable()
 export class MailService {
@@ -49,16 +50,14 @@ export class MailService {
   async sendEmail(
     to: string,
     subject: string,
-    text?: string,
-    html?: string,
+    contentHtml: string,
   ): Promise<void> {
     try {
       const mailOptions: nodemailer.SendMailOptions = {
         from: process.env.EMAIL_USER,
         to,
         subject,
-        text,
-        html,
+        html: emailLayout(subject, contentHtml),
       };
       if (await this.verifyConnection()) {
         await this.transporter.sendMail(mailOptions);

@@ -4,5 +4,5 @@
   "references": [
     { "path": "../packages/types" }
   ],
-  "include": ["src/**/*", "../packages/types/dist/**/*"]
+  "include": ["src/**/*", "layouts/**/*", "../packages/types/dist/**/*"]
 }

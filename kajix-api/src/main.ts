@@ -55,14 +55,16 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(3001);
+  if (!process.env.PORT) {
+    console.error('Error: PORT is not defined in .env file');
+    process.exit(1);
+  }
+
+  await app.listen(process.env.PORT);
+  console.log(`Server is running on port ${process.env.PORT}`);
 }
 
-bootstrap()
-  .catch((error) => {
-    console.error('Failed to start application:', error);
-    process.exit(1);
-  })
-  .then(() => {
-    console.log(`Server is running on port ${process.env.PORT ?? 3000}`);
-  });
+bootstrap().catch((error) => {
+  console.error('Failed to start application:', error);
+  process.exit(1);
+});

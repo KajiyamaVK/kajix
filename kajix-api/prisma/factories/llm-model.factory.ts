@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { faker } from '@faker-js/faker';
+import { LLMType } from '@kajix/types';
 
 const prisma = new PrismaClient();
 
@@ -71,42 +72,81 @@ const popularModels = [
   {
     companyName: 'OpenAI',
     models: [
-      { name: 'GPT-4', typeName: 'text' },
-      { name: 'GPT-3.5-Turbo', typeName: 'text' },
-      { name: 'GPT-3.5-Turbo-16k', typeName: 'text' },
-    ],
-  },
-  {
-    companyName: 'Anthropic',
-    models: [
-      { name: 'Claude 3 Opus', typeName: 'text' },
-      { name: 'Claude 3 Sonnet', typeName: 'text' },
-      { name: 'Claude 3 Haiku', typeName: 'text' },
+      {
+        name: 'GPT-4o',
+        modelName: 'gpt-4o-2024-08-06',
+        typeName: LLMType.TEXT,
+      },
+      {
+        name: 'o1',
+        modelName: 'o1-2024-12-17',
+        typeName: LLMType.TEXT,
+      },
+      {
+        name: 'o3-mini',
+        modelName: 'o3-mini-2025-01-31',
+        typeName: LLMType.TEXT,
+      },
+      {
+        name: 'Whisper',
+        modelName: 'whisper-1',
+        typeName: LLMType.TRANSCRIPTION,
+      },
+      {
+        name: 'DALL·E 3',
+        modelName: 'dall-e-3',
+        typeName: LLMType.IMAGE,
+      },
+      {
+        name: 'text-embedding-3-small',
+        modelName: 'text-embedding-3-small',
+        typeName: LLMType.EMBEDDING,
+      },
+      {
+        name: 'text-embedding-3-large',
+        modelName: 'text-embedding-3-large',
+        typeName: LLMType.EMBEDDING,
+      },
     ],
   },
   {
     companyName: 'Google DeepMind',
     models: [
-      { name: 'Gemini Pro', typeName: 'text' },
-      { name: 'Gemini Ultra', typeName: 'text' },
+      {
+        name: 'Gemini 2.0 Flash',
+        modelName: 'gemini-2.0-flash',
+        typeName: LLMType.TEXT,
+      },
+      {
+        name: 'Imagen 3',
+        modelName: 'imagen-3.0-generate-002',
+        typeName: LLMType.IMAGE,
+      },
     ],
   },
   {
-    companyName: 'Cohere',
+    companyName: 'DeepSeek',
     models: [
-      { name: 'Command', typeName: 'text' },
-      { name: 'Command-Light', typeName: 'text' },
-      { name: 'Command-Nightly', typeName: 'text' },
-      { name: 'Embed', typeName: 'embedding' },
+      {
+        name: 'DeepSeek R1',
+        modelName: 'deepseek-reasoner',
+        typeName: LLMType.TEXT,
+      },
     ],
   },
   {
-    companyName: 'Mistral AI',
+    companyName: 'Anthropic',
     models: [
-      { name: 'Mistral Large', typeName: 'text' },
-      { name: 'Mistral Medium', typeName: 'text' },
-      { name: 'Mistral Small', typeName: 'text' },
-      { name: 'Mistral Embed', typeName: 'embedding' },
+      {
+        name: 'Claude 3.5 Sonnet',
+        modelName: 'claude-3-5-sonnet-20241022',
+        typeName: LLMType.TEXT,
+      },
+      {
+        name: 'Claude 3.7 Sonnet',
+        modelName: 'claude-3-7-sonnet-20250219',
+        typeName: LLMType.TEXT,
+      },
     ],
   },
 ];
@@ -135,7 +175,7 @@ export async function createRealLLMModels() {
 
         const modelData = {
           displayName: model.name,
-          modelName: model.name.toLowerCase().replace(/\s+/g, '-'),
+          modelName: model.modelName,
           llmCompanyId: llmCompany.id,
           typeId: llmType.id,
         };

@@ -9,12 +9,11 @@ describe('Mail Service (e2e)', () => {
 
   // Mock implementation for testing
   const mockMailService = {
-    sendEmail: jest.fn().mockImplementation((to, subject, text, html) => {
+    sendEmail: jest.fn().mockImplementation((to, subject, contentHtml) => {
       // Just log the email details for verification
       console.log(`Mock sending email to: ${to}`);
       console.log(`Subject: ${subject}`);
-      console.log(`Text: ${text}`);
-      console.log(`HTML: ${html}`);
+      console.log(`Content HTML: ${contentHtml}`);
       return Promise.resolve();
     }),
   };
@@ -44,17 +43,15 @@ describe('Mail Service (e2e)', () => {
   it('should send an email successfully', async () => {
     const to = 'test@example.com';
     const subject = 'Test Email from E2E Test';
-    const text = 'This is a test email sent from the E2E test.';
-    const html =
+    const contentHtml =
       '<p>This is a <strong>test email</strong> sent from the E2E test.</p>';
 
-    await mailService.sendEmail(to, subject, text, html);
+    await mailService.sendEmail(to, subject, contentHtml);
 
     expect(mockMailService.sendEmail).toHaveBeenCalledWith(
       to,
       subject,
-      text,
-      html,
+      contentHtml,
     );
   });
 
@@ -72,7 +69,6 @@ describe('Mail Service (e2e)', () => {
       await realMailService.sendEmail(
         'test@example.com', // Using a generic test email instead of a real one
         'Test Email from E2E Test - Real Service',
-        'This is a real test email sent from the E2E test.',
         '<p>This is a <strong>real test email</strong> sent from the E2E test.</p>',
       );
     } finally {
@@ -86,8 +82,10 @@ describe('Mail Service (e2e)', () => {
 
     const to = 'test@example.com';
     const subject = 'Test Email';
-    const text = 'Test content';
+    const contentHtml = '<p>Test content</p>';
 
-    await expect(mailService.sendEmail(to, subject, text)).rejects.toThrow();
+    await expect(
+      mailService.sendEmail(to, subject, contentHtml),
+    ).rejects.toThrow();
   });
 });
