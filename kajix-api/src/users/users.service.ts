@@ -248,7 +248,7 @@ export class UsersService {
       throw new BadRequestException('Email is required');
     }
 
-    const verificationToken = this.generateRandomToken(64); // Use local method
+    const verificationToken = this.generateRandomToken(64);
     const verificationLink = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
 
     const mailFrom = process.env.MAIL_FROM;
