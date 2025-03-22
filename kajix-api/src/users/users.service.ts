@@ -232,10 +232,35 @@ export class UsersService {
     }
   }
 
-  private getVerificationResponse(): VerificationResponseDto {
-    // No changes needed here
+  async verifyToken(token: string): Promise<VerificationResponseDto> {
+    if (!token) {
+      throw new BadRequestException('Token is required');
+    }
+
+    const tokenRecord = await this.prisma.tmpToken.findFirst({
+      where: { token },
+    });
+
+    if (!tokenRecord) {
+      throw new NotFoundException('Token not found');
+    }
+
+    if (tokenRecord.isUsed) {
+      throw new BadRequestException('Token has already been used');
+    }
+
+    if (tokenRecord.expiresAt < new Date()) {
+      throw new BadRequestException('Token has expired');
+    }
+
+    // Mark token as used
+    await this.prisma.tmpToken.update({
+      where: { id: tokenRecord.id },
+      data: { isUsed: true },
+    });
+
     return {
-      message: 'Verification email sent successfully',
+      message: 'Token validated successfully',
     };
   }
 
@@ -249,7 +274,7 @@ export class UsersService {
     }
 
     const verificationToken = this.generateRandomToken(64);
-    const verificationLink = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
+    const verificationLink = `${process.env.FRONTEND_URL}/register/${verificationToken}`;
 
     const mailFrom = process.env.MAIL_FROM;
     if (!mailFrom) {
@@ -272,6 +297,6 @@ export class UsersService {
     const { subject, body } = this.getEmailTemplate(locale, verificationLink);
     await this.mailService.sendEmail(email, subject, body);
 
-    return this.getVerificationResponse();
+    return this.verifyToken(verificationToken);
   }
 }

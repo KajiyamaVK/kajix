@@ -2,9 +2,9 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class VerificationResponseDto {
   @ApiProperty({
-    description:
-      'Status message indicating the result of the verification email request',
-    example: 'Verification email sent successfully',
+    description: 'Response message indicating the result of the verification',
+    example: 'Token validated successfully',
+    required: true,
   })
   message: string;
 }
