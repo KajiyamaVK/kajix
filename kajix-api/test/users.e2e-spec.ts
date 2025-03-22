@@ -1,22 +1,38 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from './../src/app.module';
+import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { CreateUserDto } from '../src/users/dto/create-user.dto';
 import { UpdateUserDto } from '../src/users/dto/update-user.dto';
+import { Locale } from '@types';
 import * as crypto from 'crypto';
 import { TransactionHelper } from './helpers/transaction.helper';
+import { MailService } from '../src/mail/mail.service';
+import * as bcrypt from 'bcrypt';
 
 describe('UsersController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let txHelper: TransactionHelper;
+  let mockMailService: { sendEmail: jest.Mock };
 
   beforeAll(async () => {
+    mockMailService = {
+      sendEmail: jest.fn().mockImplementation((to, subject, contentHtml) => {
+        console.log(`Mock sending email to: ${to}`);
+        console.log(`Subject: ${subject}`);
+        console.log(`Content HTML: ${contentHtml}`);
+        return Promise.resolve();
+      }),
+    };
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(MailService)
+      .useValue(mockMailService)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     prisma = app.get<PrismaService>(PrismaService);
@@ -91,11 +107,12 @@ describe('UsersController (e2e)', () => {
       expect(user.password).not.toBe(createUserDto.password);
       expect(user.salt).toBeDefined();
 
-      // Verify the hashing process
-      const hashedPassword = crypto
-        .pbkdf2Sync(createUserDto.password, user.salt, 1000, 64, 'sha512')
-        .toString('hex');
-      expect(user.password).toBe(hashedPassword);
+      // Verify the hashing process using bcrypt
+      const isPasswordValid = await bcrypt.compare(
+        createUserDto.password,
+        user.password,
+      );
+      expect(isPasswordValid).toBe(true);
     });
 
     it('should fail if email is invalid', () => {
@@ -285,6 +302,111 @@ describe('UsersController (e2e)', () => {
         where: { id: user.id },
       });
       expect(deletedUser).toBeNull();
+    });
+  });
+
+  describe('POST /users/verify-email', () => {
+    let email: string;
+
+    beforeEach(async () => {
+      await txHelper.resetDB();
+      mockMailService.sendEmail.mockClear();
+      email = `test-${Date.now()}@example.com`;
+    });
+
+    it('should create verification token and send email in English', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/users/verify-email')
+        .send({ email, locale: Locale.EN })
+        .expect(200);
+
+      expect(response.body).toEqual({
+        message: 'Verification email sent successfully',
+      });
+
+      // Verify token was created in database
+      const token = await prisma.tmpToken.findFirst({
+        where: { emailTo: email },
+      });
+      expect(token).not.toBeNull();
+      if (!token) throw new Error('Token not found'); // This satisfies TypeScript
+
+      expect(token.emailTo).toBe(email);
+      expect(token.expiresAt).toBeDefined();
+      expect(token.token).toBeDefined();
+      expect(token.locale).toBe(Locale.EN);
+      expect(token.type).toBe('EMAIL_CONFIRMATION');
+      expect(token.isExpired).toBe(false);
+      expect(token.isConfirmed).toBe(false);
+      expect(token.isUsed).toBe(false);
+
+      // Verify email was sent with correct parameters
+      expect(mockMailService.sendEmail).toHaveBeenCalledTimes(1);
+      const [sentTo, subject, content] =
+        mockMailService.sendEmail.mock.calls[0];
+      expect(sentTo).toBe(email);
+      expect(subject).toBe('Confirm your email');
+      expect(content).toContain(
+        'To complete your registration and access all our AI-powered features, please verify your email address by clicking the button below',
+      );
+    });
+
+    it('should create verification token and send email in Portuguese', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/users/verify-email')
+        .send({ email, locale: Locale.PTBR })
+        .expect(200);
+
+      expect(response.body).toEqual({
+        message: 'Verification email sent successfully',
+      });
+
+      // Verify token was created in database
+      const token = await prisma.tmpToken.findFirst({
+        where: { emailTo: email },
+      });
+      expect(token).not.toBeNull();
+      if (!token) throw new Error('Token not found'); // This satisfies TypeScript
+
+      expect(token.emailTo).toBe(email);
+      expect(token.expiresAt).toBeDefined();
+      expect(token.token).toBeDefined();
+      expect(token.locale).toBe(Locale.PTBR);
+      expect(token.type).toBe('EMAIL_CONFIRMATION');
+      expect(token.isExpired).toBe(false);
+      expect(token.isConfirmed).toBe(false);
+      expect(token.isUsed).toBe(false);
+
+      // Verify email was sent with correct parameters
+      expect(mockMailService.sendEmail).toHaveBeenCalledTimes(1);
+      const [sentTo, subject, content] =
+        mockMailService.sendEmail.mock.calls[0];
+      expect(sentTo).toBe(email);
+      expect(subject).toBe('Confirme seu email');
+      expect(content).toContain(
+        'Para completar seu cadastro e acessar todos os nossos recursos com IA, por favor verifique seu endereço de email clicando no botão abaixo',
+      );
+    });
+
+    it('should return 400 for invalid email format', async () => {
+      await request(app.getHttpServer())
+        .post('/users/verify-email')
+        .send({ email: 'invalid-email', locale: Locale.EN })
+        .expect(400);
+    });
+
+    it('should return 400 for missing locale', async () => {
+      await request(app.getHttpServer())
+        .post('/users/verify-email')
+        .send({ email })
+        .expect(400);
+    });
+
+    it('should return 400 for invalid locale', async () => {
+      await request(app.getHttpServer())
+        .post('/users/verify-email')
+        .send({ email, locale: 'INVALID' })
+        .expect(400);
     });
   });
 });

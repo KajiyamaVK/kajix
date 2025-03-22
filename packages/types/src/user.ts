@@ -46,3 +46,11 @@ export interface UpdateUserDto {
   firstName?: string;
   lastName?: string;
 }
+
+/**
+ * Available locales for the application
+ */
+export enum Locale {
+  EN = "en",
+  PTBR = "ptbr",
+}

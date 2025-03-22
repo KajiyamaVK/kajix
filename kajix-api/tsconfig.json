@@ -19,8 +19,9 @@
     "noFallthroughCasesInSwitch": false,
     "composite": true,
     "paths": {
-      "@types": ["../packages/types/dist"],
-      "@types/*": ["../packages/types/dist/*"]
+      "@types": ["../packages/types/src"],
+      "@types/*": ["../packages/types/src/*"],
+      "@src/*": ["src/*"]
     },
     "rootDir": "./"
   },

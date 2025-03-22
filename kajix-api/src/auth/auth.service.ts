@@ -2,35 +2,44 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
-import { compareSync } from 'bcrypt';
+import { LoginDto } from './dto/login.dto';
+import * as bcrypt from 'bcrypt';
+import { UserDto } from '@src/users/dto/user.dto';
+import { TokenType } from '@types';
 
 @Injectable()
 export class AuthService {
-  private tokenStore: Map<string, { userId: number; expiresAt: number }> =
-    new Map();
-  private usedRefreshTokens: Set<string> = new Set();
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly userService: UsersService,
+    private readonly usersService: UsersService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userService.findByEmail(email);
-    if (user && compareSync(password, user.password)) {
-      const { ...result } = user;
-      return result;
+  async validateUser(loginDto: LoginDto): Promise<any> {
+    const userWithPassword = await this.prisma.user.findUnique({
+      where: { email: loginDto.email },
+    });
+    if (!userWithPassword) {
+      return null; // User not found
     }
-    return null;
+    const isMatch = bcrypt.compareSync(
+      loginDto.password,
+      userWithPassword.password,
+    );
+    if (!isMatch) {
+      return null;
+    }
+    const user = await this.usersService.findByEmail(loginDto.email);
+    return user;
   }
 
-  async login(user: any) {
+  async login(user: UserDto) {
     const payload = {
       email: user.email,
       sub: user.id,
       timestamp: Date.now(),
     };
+
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: '15m',
     });
@@ -38,105 +47,154 @@ export class AuthService {
       expiresIn: '7d',
     });
 
-    // Store tokens with expiration
-    const accessTokenExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
-    const refreshTokenExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
-
-    this.tokenStore.set(`access_token:${user.id}:${accessToken}`, {
-      userId: user.id,
-      expiresAt: accessTokenExpiry,
-    });
-    this.tokenStore.set(`refresh_token:${user.id}:${refreshToken}`, {
-      userId: user.id,
-      expiresAt: refreshTokenExpiry,
-    });
+    // Save both tokens in TmpTokens table
+    await Promise.all([
+      this.prisma.tmpToken.create({
+        data: {
+          type: TokenType.ACCESS_TOKEN,
+          emailFrom: 'system@kajix.io', // System generated token
+          emailTo: user.email,
+          token: accessToken,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+          locale: 'en', // Default locale
+        },
+      }),
+      this.prisma.tmpToken.create({
+        data: {
+          type: TokenType.REFRESH_TOKEN,
+          emailFrom: 'system@kajix.io', // System generated token
+          emailTo: user.email,
+          token: refreshToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          locale: 'en', // Default locale
+        },
+      }),
+    ]);
 
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-      },
+      user,
     };
   }
 
-  async logout(userId: number, accessToken: string, refreshToken: string) {
-    this.tokenStore.delete(`access_token:${userId}:${accessToken}`);
-    this.tokenStore.delete(`refresh_token:${userId}:${refreshToken}`);
-    this.usedRefreshTokens.add(refreshToken);
-    return true;
-  }
-
   async refreshToken(userId: number, refreshToken: string) {
-    if (this.usedRefreshTokens.has(refreshToken)) {
-      throw new UnauthorizedException('Refresh token has been used');
-    }
+    try {
+      // Verify the refresh token. This will throw an error if it's invalid or expired.
+      const payload = this.jwtService.verify(refreshToken);
 
-    const tokenKey = `refresh_token:${userId}:${refreshToken}`;
-    const storedToken = this.tokenStore.get(tokenKey);
+      // Check if the user ID in the token matches the provided user ID
+      if (payload.sub !== userId) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
 
-    if (!storedToken || storedToken.expiresAt < Date.now()) {
+      // Check if token is blacklisted (used or expired)
+      const existingToken = await this.prisma.tmpToken.findFirst({
+        where: {
+          token: refreshToken,
+          type: 'REFRESH_TOKEN',
+        },
+      });
+
+      if (!existingToken || existingToken.isUsed || existingToken.isExpired) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+
+      // Get the user
+      const user = await this.usersService.findOne(userId);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      // Mark the current refresh token as used
+      await this.prisma.tmpToken.update({
+        where: { id: existingToken.id },
+        data: { isUsed: true },
+      });
+
+      // Generate new tokens
+      const newPayload = {
+        email: user.email,
+        sub: user.id,
+        timestamp: Date.now(),
+      };
+
+      const newAccessToken = this.jwtService.sign(newPayload, {
+        expiresIn: '15m',
+      });
+      const newRefreshToken = this.jwtService.sign(newPayload, {
+        expiresIn: '7d',
+      });
+
+      // Store new tokens
+      await Promise.all([
+        this.prisma.tmpToken.create({
+          data: {
+            type: 'ACCESS_TOKEN',
+            emailFrom: 'system@kajix.io',
+            emailTo: user.email,
+            token: newAccessToken,
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+            locale: 'en',
+          },
+        }),
+        this.prisma.tmpToken.create({
+          data: {
+            type: 'REFRESH_TOKEN',
+            emailFrom: 'system@kajix.io',
+            emailTo: user.email,
+            token: newRefreshToken,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+            locale: 'en',
+          },
+        }),
+      ]);
+
+      return {
+        access_token: newAccessToken,
+        refresh_token: newRefreshToken,
+        user,
+      };
+    } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
 
-    const user = await this.userService.findOne(userId);
+  async logout(userId: number, accessToken: string, refreshToken: string) {
+    const user = await this.usersService.findOne(userId);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    // Generate new tokens
-    const payload = {
-      email: user.email,
-      sub: user.id,
-      timestamp: Date.now(),
-    };
-    const newAccessToken = this.jwtService.sign(payload, {
-      expiresIn: '15m',
-    });
-    const newRefreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d',
-    });
+    // Mark both tokens as used
+    await Promise.all([
+      this.prisma.tmpToken.updateMany({
+        where: {
+          token: accessToken,
+          type: 'ACCESS_TOKEN',
+          emailTo: user.email,
+        },
+        data: {
+          isUsed: true,
+          isExpired: true,
+        },
+      }),
+      this.prisma.tmpToken.updateMany({
+        where: {
+          token: refreshToken,
+          type: 'REFRESH_TOKEN',
+          emailTo: user.email,
+        },
+        data: {
+          isUsed: true,
+          isExpired: true,
+        },
+      }),
+    ]);
 
-    // Remove old tokens and store new ones
-    this.tokenStore.delete(tokenKey);
-    this.usedRefreshTokens.add(refreshToken);
-
-    const accessTokenExpiry = Date.now() + 15 * 60 * 1000;
-    const refreshTokenExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
-
-    this.tokenStore.set(`access_token:${user.id}:${newAccessToken}`, {
-      userId: user.id,
-      expiresAt: accessTokenExpiry,
-    });
-    this.tokenStore.set(`refresh_token:${user.id}:${newRefreshToken}`, {
-      userId: user.id,
-      expiresAt: refreshTokenExpiry,
-    });
-
-    return {
-      access_token: newAccessToken,
-      refresh_token: newRefreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-      },
-    };
+    return true;
   }
 
-  async isTokenValid(
-    userId: number,
-    token: string,
-    type: 'access' | 'refresh',
-  ): Promise<boolean> {
-    if (type === 'refresh' && this.usedRefreshTokens.has(token)) {
-      return false;
-    }
-
-    const tokenKey = `${type}_token:${userId}:${token}`;
-    const storedToken = this.tokenStore.get(tokenKey);
-    return storedToken !== undefined && storedToken.expiresAt > Date.now();
-  }
+  // You don't need isTokenValid, if you are using jwtService.verify correctly
+  // You should have a JwtStrategy defined to use Guards with JWT
 }

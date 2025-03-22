@@ -13,6 +13,7 @@ import { StdLlmTypeModule } from './std-llm-type/std-llm-type.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env.test', '.env'],
     }),
     PrismaModule,
     AuthModule,

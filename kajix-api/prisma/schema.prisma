@@ -57,20 +57,40 @@ model User {
   @@map("users")
 }
 
+enum TokenType {
+  EMAIL_CONFIRMATION
+  EMAIL_CHANGE
+  ACCESS_TOKEN
+  REFRESH_TOKEN
+  PASSWORD_RESET
+}
+
+enum Locale {
+  en
+  ptbr
+}
+
 model TmpToken {
   id          Int       @id @default(autoincrement())
-  type        Int
+  /// @required The type of token (e.g., EMAIL_CONFIRMATION)
+  type        TokenType
+  /// @required The email address sending the token
   emailFrom   String
+  /// @required The email address receiving the token
   emailTo     String
-  token       String?
+  /// @required The unique token string
+  token       String
   isExpired   Boolean   @default(false) @map("is_expired")
-  expiredAt   DateTime? @map("expired_at")
+  /// @required When this token expires
+  expiresAt   DateTime
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
   isConfirmed Boolean   @default(false) @map("is_confirmed")
   isUsed      Boolean   @default(false) @map("is_used")
-  locale      String    @default("en")
+  /// @required The locale for the token's associated content
+  locale      Locale
 
+  @@unique([token, isExpired])
   @@map("tmp_tokens")
 }
 

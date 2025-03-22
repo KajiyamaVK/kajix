@@ -12,5 +12,10 @@
   "maxWorkers": 1,
   "testTimeout": 10000,
   "forceExit": true,
-  "detectOpenHandles": true
+  "detectOpenHandles": true,
+  "moduleNameMapper": {
+    "^@types$": "<rootDir>/../../packages/types/src",
+    "^@types/(.*)$": "<rootDir>/../../packages/types/src/$1",
+    "^@src/(.*)$": "<rootDir>/../src/$1"
+  }
 } 

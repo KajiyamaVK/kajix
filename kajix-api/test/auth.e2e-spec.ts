@@ -75,6 +75,36 @@ describe('AuthController (e2e)', () => {
         email: testSetup.user.email,
         username: testSetup.user.username,
       });
+
+      // Verify tokens are stored in the database
+      const storedTokens = await prisma.tmpToken.findMany({
+        where: {
+          emailTo: testSetup.user.email,
+          isExpired: false,
+          isUsed: false,
+        },
+      });
+
+      // Should have both access and refresh tokens
+      expect(storedTokens).toHaveLength(2);
+
+      // Verify access token
+      const accessToken = storedTokens.find((t) => t.type === 'ACCESS_TOKEN');
+      expect(accessToken).toBeDefined();
+      expect(accessToken?.token).toBe(loginResponse.access_token);
+      expect(accessToken?.emailTo).toBe(testSetup.user.email);
+      expect(accessToken?.isExpired).toBe(false);
+      expect(accessToken?.isUsed).toBe(false);
+      expect(accessToken?.expiresAt).toBeInstanceOf(Date);
+
+      // Verify refresh token
+      const refreshToken = storedTokens.find((t) => t.type === 'REFRESH_TOKEN');
+      expect(refreshToken).toBeDefined();
+      expect(refreshToken?.token).toBe(loginResponse.refresh_token);
+      expect(refreshToken?.emailTo).toBe(testSetup.user.email);
+      expect(refreshToken?.isExpired).toBe(false);
+      expect(refreshToken?.isUsed).toBe(false);
+      expect(refreshToken?.expiresAt).toBeInstanceOf(Date);
     });
 
     it('should fail with invalid email', () => {
@@ -99,7 +129,7 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('POST /auth/logout', () => {
-    it('should successfully logout a user', async () => {
+    it('should successfully logout a user and blacklist tokens', async () => {
       // Login first to get tokens
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
@@ -109,18 +139,44 @@ describe('AuthController (e2e)', () => {
         })
         .expect(201);
 
-      console.log('Login response:', loginResponse.body);
-      console.log(
-        'JWT Secret:',
-        process.env.JWT_SECRET || 'test-jwt-secret-key',
-      );
-
       // Attempt logout
-      return request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/auth/logout')
         .set(authHelper.getAuthHeader(loginResponse.body.access_token))
         .send({ refresh_token: loginResponse.body.refresh_token })
         .expect(200);
+
+      // Verify both tokens are blacklisted
+      const blacklistedTokens = await prisma.tmpToken.findMany({
+        where: {
+          emailTo: testSetup.user.email,
+          token: {
+            in: [
+              loginResponse.body.access_token,
+              loginResponse.body.refresh_token,
+            ],
+          },
+        },
+      });
+
+      expect(blacklistedTokens).toHaveLength(2);
+      blacklistedTokens.forEach((token) => {
+        expect(token.isUsed).toBe(true);
+        expect(token.isExpired).toBe(true);
+      });
+
+      // Try to use the blacklisted access token
+      await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set(authHelper.getAuthHeader(loginResponse.body.access_token))
+        .send({ refresh_token: 'any-token' })
+        .expect(401);
+
+      // Try to use the blacklisted refresh token
+      await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .send({ refresh_token: loginResponse.body.refresh_token })
+        .expect(401);
     });
 
     it('should fail with invalid token', () => {
@@ -147,7 +203,7 @@ describe('AuthController (e2e)', () => {
       refreshToken = response.body.refresh_token;
     });
 
-    it('should issue new tokens with valid refresh token', async () => {
+    it('should issue new tokens with valid refresh token and invalidate old ones', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/refresh')
         .send({ refresh_token: refreshToken })
@@ -165,6 +221,53 @@ describe('AuthController (e2e)', () => {
         email: testSetup.user.email,
         username: testSetup.user.username,
       });
+
+      // Verify old refresh token is marked as used
+      const oldToken = await prisma.tmpToken.findFirst({
+        where: {
+          token: refreshToken,
+          type: 'REFRESH_TOKEN',
+        },
+      });
+      expect(oldToken?.isUsed).toBe(true);
+      expect(oldToken?.isExpired).toBe(false); // Should only be marked as used, not expired
+
+      // Verify new tokens are stored
+      const newTokens = await prisma.tmpToken.findMany({
+        where: {
+          emailTo: testSetup.user.email,
+          isExpired: false,
+          isUsed: false,
+          token: {
+            in: [response.body.access_token, response.body.refresh_token],
+          },
+        },
+      });
+
+      // Should have both new access and refresh tokens
+      expect(newTokens).toHaveLength(2);
+
+      // Verify new access token
+      const newAccessToken = newTokens.find((t) => t.type === 'ACCESS_TOKEN');
+      expect(newAccessToken).toBeDefined();
+      expect(newAccessToken?.token).toBe(response.body.access_token);
+      expect(newAccessToken?.emailTo).toBe(testSetup.user.email);
+      expect(newAccessToken?.isUsed).toBe(false);
+      expect(newAccessToken?.isExpired).toBe(false);
+
+      // Verify new refresh token
+      const newRefreshToken = newTokens.find((t) => t.type === 'REFRESH_TOKEN');
+      expect(newRefreshToken).toBeDefined();
+      expect(newRefreshToken?.token).toBe(response.body.refresh_token);
+      expect(newRefreshToken?.emailTo).toBe(testSetup.user.email);
+      expect(newRefreshToken?.isUsed).toBe(false);
+      expect(newRefreshToken?.isExpired).toBe(false);
+
+      // Try to use the old refresh token again - should fail
+      await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .send({ refresh_token: refreshToken })
+        .expect(401);
     });
 
     it('should fail with invalid refresh token', () => {
@@ -182,6 +285,35 @@ describe('AuthController (e2e)', () => {
         .expect(200);
 
       // Second refresh with same token - should fail
+      await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .send({ refresh_token: refreshToken })
+        .expect(401);
+
+      // Verify token is marked as used in database
+      const usedToken = await prisma.tmpToken.findFirst({
+        where: {
+          token: refreshToken,
+          type: 'REFRESH_TOKEN',
+        },
+      });
+      expect(usedToken?.isUsed).toBe(true);
+    });
+
+    it('should fail with expired refresh token', async () => {
+      // Manually expire the token in the database
+      await prisma.tmpToken.updateMany({
+        where: {
+          token: refreshToken,
+          type: 'REFRESH_TOKEN',
+        },
+        data: {
+          isExpired: true,
+          expiresAt: new Date(Date.now() - 1000), // Set to past date
+        },
+      });
+
+      // Try to use expired token
       await request(app.getHttpServer())
         .post('/auth/refresh')
         .send({ refresh_token: refreshToken })
