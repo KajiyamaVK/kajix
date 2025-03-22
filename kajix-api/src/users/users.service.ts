@@ -12,7 +12,7 @@ import * as bcrypt from 'bcrypt'; // Use bcrypt
 import { Prisma } from '@prisma/client';
 import { PrismaErrorCode } from '../prisma/prisma.constants';
 import { MailService } from '../mail/mail.service';
-import { TokenType, Locale } from '@types';
+import { TokenType, Locale } from '@kajix/types';
 import { VerificationResponseDto } from './dto/verification-response.dto';
 import { UserDto } from './dto/user.dto'; // Import UserDto
 import * as crypto from 'crypto';

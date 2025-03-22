@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import { LLMType } from '@types';
+import { LLMType } from '@kajix/types';
 
 const prisma = new PrismaClient();
 

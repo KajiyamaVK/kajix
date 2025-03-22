@@ -1,6 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { HtmlMarkdownService } from './html-markdown.service';
-import type { HtmlToMarkdownDto, MarkdownResponse } from '@types';
+import type { HtmlToMarkdownDto, MarkdownResponse } from '@kajix/types';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('html-markdown')

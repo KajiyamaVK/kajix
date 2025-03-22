@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum } from 'class-validator';
-import { Locale } from '@types';
+import { Locale } from '@kajix/types';
 
 export class VerifyEmailDto {
   @ApiProperty({

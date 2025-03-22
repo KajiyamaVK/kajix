@@ -5,7 +5,7 @@ import {
   RequestTimeoutException,
 } from '@nestjs/common';
 import { chromium, Browser, Page } from 'playwright';
-import { ScrapingRequest, ScrapingResponse, PageContent } from '@types';
+import { ScrapingRequest, ScrapingResponse, PageContent } from '@kajix/types';
 import {
   WEB_SCRAPING_TIMEOUT,
   USER_AGENT,

@@ -5,7 +5,7 @@ import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { CreateUserDto } from '../src/users/dto/create-user.dto';
 import { UpdateUserDto } from '../src/users/dto/update-user.dto';
-import { Locale } from '@types';
+import { Locale } from '@kajix/types';
 import * as crypto from 'crypto';
 import { TransactionHelper } from './helpers/transaction.helper';
 import { MailService } from '../src/mail/mail.service';

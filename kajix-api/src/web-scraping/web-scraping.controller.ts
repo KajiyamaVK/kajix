@@ -8,7 +8,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { WebScrapingService } from './web-scraping.service';
-import { ScrapingResponse } from '@types';
+import { ScrapingResponse } from '@kajix/types';
 import { ScrappedContentDto } from './dto/scrapped-content.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import {

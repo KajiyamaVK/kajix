@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, IsUrl } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ScrapingRequest } from '@types';
+import { ScrapingRequest } from '@kajix/types';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**

@@ -1,4 +1,4 @@
-import { LLMType } from '@types';
+import { LLMType } from '@kajix/types';
 
 // Common LLM types that can be used as initial data
 export const COMMON_LLM_TYPES = [

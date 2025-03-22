@@ -1,4 +1,4 @@
-import { ScrapingResponse, PageContent } from '@types';
+import { ScrapingResponse, PageContent } from '@kajix/types';
 import { ApiProperty } from '@nestjs/swagger';
 import { PageContentDto } from './page-content.dto';
 

@@ -5,7 +5,7 @@ import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { UserDto } from '@src/users/dto/user.dto';
-import { TokenType } from '@types';
+import { TokenType } from '@kajix/types';
 
 @Injectable()
 export class AuthService {

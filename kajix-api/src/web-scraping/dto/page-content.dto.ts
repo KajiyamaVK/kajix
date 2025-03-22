@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PageContent } from '@types';
+import { PageContent } from '@kajix/types';
 
 /**
  * DTO for page content from web scraping
