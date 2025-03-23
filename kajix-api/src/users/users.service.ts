@@ -268,7 +268,6 @@ export class UsersService {
     email: string,
     locale: Locale,
   ): Promise<VerificationResponseDto> {
-    // No changes needed here
     if (!email) {
       throw new BadRequestException('Email is required');
     }
@@ -297,6 +296,8 @@ export class UsersService {
     const { subject, body } = this.getEmailTemplate(locale, verificationLink);
     await this.mailService.sendEmail(email, subject, body);
 
-    return this.verifyToken(verificationToken);
+    return {
+      message: 'Verification email sent successfully',
+    };
   }
 }
