@@ -46,7 +46,7 @@
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.0.0",
-    "@nestjs/swagger": "^11.0.6",
+    "@nestjs/swagger": "^7.1.8",
     "@types/cache-manager": "^4.0.6",
     "@types/ioredis": "^4.28.10",
     "@types/nodemailer": "^6.4.17",

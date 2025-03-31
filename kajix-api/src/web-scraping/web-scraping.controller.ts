@@ -260,7 +260,7 @@ export class WebScrapingController {
     required: false,
     description: 'Type of content to return (markdown, html, or both)',
     enum: ContentType,
-    default: ContentType.MARKDOWN,
+    schema: { default: ContentType.MARKDOWN },
     example: ContentType.MARKDOWN,
   })
   @ApiResponse({
@@ -350,7 +350,7 @@ export class WebScrapingController {
     required: false,
     description: 'Type of content to return (markdown, html, or both)',
     enum: ContentType,
-    default: ContentType.MARKDOWN,
+    schema: { default: ContentType.MARKDOWN },
     example: ContentType.MARKDOWN,
   })
   @ApiResponse({
